@@ -1,7 +1,7 @@
 """
-PathFinder AI: Technology-Themed Undergraduate AI Career Guidance System
------------------------------------------------------------------------
-A complete, standalone, high-tech cyber/AI Streamlit application integrating:
+PathFinder AI: Modern AI-Powered Career Intelligence Platform
+-------------------------------------------------------------
+A complete, standalone Streamlit application integrating:
 1. 4-Pillar Categorized Soft Skills & Work Strengths (People, Ideas, Data, Execution)
 2. 6-Archetype Job-to-Soft-Skill Requirement Mapping with Weight Bonus
 3. Reactive Profile Intake with real-time dynamic Elective & Module Sliders
@@ -15,7 +15,7 @@ A complete, standalone, high-tech cyber/AI Streamlit application integrating:
 11. Dataset & Model Studio (Upload Custom CSV / Load Benchmark / Train Model / Feature Importances / Batch Predictions)
 12. Local SQLite persistence for history logging
 
-Theme: Futuristic High-Tech / Cyber AI / Glassmorphism
+Visual Identity: AI + Career Intelligence + Education + Personal Growth
 """
 
 import datetime
@@ -33,139 +33,343 @@ import plotly.graph_objects as go
 import streamlit as st
 
 # -----------------------------------------------------------------------------
-# 1. STREAMLIT PAGE CONFIGURATION & CYBER TECH DESIGN SYSTEM
+# 1. STREAMLIT PAGE CONFIGURATION & MODERN RESPONSIVE DESIGN SYSTEM
 # -----------------------------------------------------------------------------
 st.set_page_config(
     layout="wide",
-    page_title="PathFinder AI // Cyber Career Intelligence",
+    page_title="PathFinder AI — Intelligent Career Guidance Platform",
     page_icon="⚡",
     initial_sidebar_state="collapsed",
 )
 
-# Inject custom technology-themed CSS (Futuristic Cyber / AI Dark Tech System)
+# Custom Modern AI SaaS / Glassmorphism Dark Theme
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap');
 
-    /* Global Dark Tech Reset & Cyber Background */
+    /* Global Dark Reset & Background */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #070B14 !important;
         background-image: 
-            radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.08) 0px, transparent 45%),
+            radial-gradient(at 0% 0%, rgba(0, 229, 255, 0.07) 0px, transparent 45%),
             radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 45%),
-            radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.05) 0px, transparent 50%),
-            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px) !important;
-        background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+            radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.06) 0px, transparent 50%),
+            linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px) !important;
+        background-size: 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px !important;
         color: #F8FAFC !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Container Padding & Max Width */
+    /* Responsive Full-Width Container (min 94%, max 1500px) */
     .block-container {
-        padding-top: 2.8rem !important;
-        padding-bottom: 4rem !important;
-        max-width: 1280px !important;
+        padding-top: clamp(1.5rem, 2vw, 2.5rem) !important;
+        padding-bottom: clamp(3rem, 4vw, 5rem) !important;
+        padding-left: clamp(1rem, 2.5vw, 3rem) !important;
+        padding-right: clamp(1rem, 2.5vw, 3rem) !important;
+        max-width: min(94%, 1500px) !important;
+        margin: 0 auto !important;
     }
 
-    /* Futuristic App Header */
-    .pf-header {
-        margin-bottom: 1.75rem;
-        border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-        padding-bottom: 1.5rem;
+    /* Top Platform Header */
+    .pf-hero-header {
+        margin-bottom: clamp(1.4rem, 2.2vw, 2.2rem);
+        padding: clamp(1.6rem, 2.4vw, 2.5rem);
+        background: linear-gradient(135deg, rgba(16, 26, 48, 0.85) 0%, rgba(11, 18, 36, 0.95) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 20px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
         position: relative;
+        overflow: hidden;
     }
-    .pf-header::after {
+    .pf-hero-header::before {
         content: '';
         position: absolute;
-        bottom: -1px;
+        top: 0;
         left: 0;
-        width: 140px;
-        height: 2px;
-        background: linear-gradient(90deg, #00F0FF 0%, #818CF8 100%);
-        box-shadow: 0 0 12px #00F0FF;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #00E5FF 0%, #6366F1 50%, #38BDF8 100%);
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
     }
-    .pf-header-badge {
+    .pf-hero-badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.45rem;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.725rem;
+        font-size: clamp(0.72rem, 0.8vw, 0.82rem);
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #00F0FF;
-        background: rgba(0, 240, 255, 0.1);
-        border: 1px solid rgba(0, 240, 255, 0.45);
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-        padding: 0.3rem 0.85rem;
+        color: #00E5FF;
+        background: rgba(0, 229, 255, 0.1);
+        border: 1px solid rgba(0, 229, 255, 0.35);
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+        padding: 0.3rem 0.9rem;
         border-radius: 9999px;
         margin-bottom: 0.75rem;
     }
-    .pf-title {
-        font-family: 'Space Grotesk', 'Inter', sans-serif;
-        font-size: 2.35rem;
+    .pf-hero-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(2rem, 3vw, 3.2rem);
         font-weight: 800;
-        letter-spacing: -0.03em;
-        background: linear-gradient(135deg, #FFFFFF 0%, #38BDF8 50%, #A78BFA 100%);
+        letter-spacing: -0.025em;
+        background: linear-gradient(135deg, #FFFFFF 0%, #38BDF8 55%, #C084FC 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin: 0;
-        line-height: 1.2;
-        text-shadow: 0 0 30px rgba(56, 189, 248, 0.25);
+        line-height: 1.15;
     }
-    .pf-subtitle {
-        font-size: 0.95rem;
+    .pf-hero-subtitle {
+        font-size: clamp(0.95rem, 1.1vw, 1.2rem);
         color: #94A3B8;
-        margin-top: 0.45rem;
-        font-weight: 400;
-        letter-spacing: 0.01em;
+        margin-top: 0.5rem;
         line-height: 1.5;
     }
 
-    /* Glassmorphic Cyber HUD Cards */
-    .pf-card {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(13, 20, 36, 0.85) 100%);
-        border: 1px solid rgba(56, 189, 248, 0.22);
-        border-radius: 14px;
-        padding: 1.4rem 1.6rem;
-        margin-bottom: 1.25rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    /* Stepper Navigation Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: clamp(0.5rem, 1vw, 1rem);
+        background: rgba(14, 23, 44, 0.75);
+        padding: 0.55rem 0.75rem;
+        border-radius: 16px;
+        border: 1px solid rgba(56, 189, 248, 0.2);
         backdrop-filter: blur(16px);
-        transition: all 0.25s ease-in-out;
+        margin-bottom: clamp(1.4rem, 2vw, 2rem);
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: clamp(0.9rem, 1.05vw, 1.15rem);
+        font-weight: 600;
+        color: #94A3B8 !important;
+        padding: clamp(0.6rem, 1vw, 0.85rem) clamp(1rem, 1.5vw, 1.6rem);
+        border-radius: 12px;
+        transition: all 0.22s ease-in-out;
+        border: 1px solid transparent;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #38BDF8 !important;
+        background: rgba(56, 189, 248, 0.08);
+    }
+    .stTabs [aria-selected="true"] {
+        color: #00E5FF !important;
+        background: linear-gradient(135deg, rgba(2, 132, 199, 0.3) 0%, rgba(99, 102, 241, 0.3) 100%) !important;
+        border: 1px solid rgba(0, 229, 255, 0.5) !important;
+        box-shadow: 0 0 18px rgba(0, 229, 255, 0.25) !important;
+        font-weight: 700 !important;
+    }
+
+    /* Modern Glassmorphism Cards */
+    .pf-card {
+        background: linear-gradient(135deg, rgba(16, 26, 48, 0.8) 0%, rgba(12, 20, 38, 0.9) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.18);
+        border-radius: 18px;
+        padding: clamp(1.2rem, 1.8vw, 2.2rem);
+        margin-bottom: clamp(1.2rem, 1.8vw, 1.8rem);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        transition: all 0.22s ease-in-out;
     }
     .pf-card:hover {
-        border-color: rgba(56, 189, 248, 0.45);
-        box-shadow: 0 12px 35px rgba(0, 240, 255, 0.12), inset 0 1px 0 rgba(56, 189, 248, 0.2);
-        transform: translateY(-2px);
+        border-color: rgba(56, 189, 248, 0.38);
+        box-shadow: 0 14px 38px rgba(0, 229, 255, 0.08), inset 0 1px 0 rgba(56, 189, 248, 0.15);
     }
     .pf-card-title {
-        font-family: 'Space Grotesk', 'Inter', sans-serif;
-        font-size: 1.1rem;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(1.15rem, 1.4vw, 1.6rem);
         font-weight: 700;
         color: #F8FAFC;
         margin-bottom: 0.35rem;
-        letter-spacing: -0.01em;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.65rem;
     }
     .pf-card-desc {
-        font-size: 0.85rem;
+        font-size: clamp(0.85rem, 0.95vw, 1.05rem);
         color: #94A3B8;
-        margin-bottom: 1rem;
-        line-height: 1.45;
+        margin-bottom: 1.15rem;
+        line-height: 1.5;
     }
 
-    /* Hero Holographic Card */
+    /* Metric & HUD Cards */
+    .pf-stat-card {
+        background: rgba(14, 23, 44, 0.7);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 16px;
+        padding: clamp(1rem, 1.4vw, 1.6rem);
+        text-align: center;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .pf-stat-card:hover {
+        transform: translateY(-2px);
+        border-color: #00E5FF;
+        box-shadow: 0 8px 24px rgba(0, 229, 255, 0.1);
+    }
+    .pf-stat-label {
+        font-size: clamp(0.75rem, 0.85vw, 0.9rem);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94A3B8;
+        margin-bottom: 0.3rem;
+    }
+    .pf-stat-value {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(1.8rem, 2.5vw, 3rem);
+        font-weight: 800;
+        color: #00E5FF;
+        letter-spacing: -0.02em;
+    }
+    .pf-stat-sub {
+        font-size: clamp(0.75rem, 0.85vw, 0.95rem);
+        color: #38BDF8;
+        margin-top: 0.25rem;
+    }
+
+    /* Core Module Responsive Cards (Clean Score + Progress Bar) */
+    .pf-module-card {
+        background: rgba(14, 23, 44, 0.7);
+        border: 1px solid rgba(56, 189, 248, 0.18);
+        border-radius: 16px;
+        padding: clamp(1rem, 1.3vw, 1.4rem);
+        margin-bottom: 0.85rem;
+        transition: all 0.2s ease;
+    }
+    .pf-module-card:hover {
+        border-color: rgba(0, 229, 255, 0.45);
+        background: rgba(16, 26, 48, 0.85);
+        box-shadow: 0 8px 20px rgba(0, 229, 255, 0.08);
+    }
+    .pf-module-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .pf-module-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .pf-module-icon {
+        font-size: clamp(1.4rem, 1.8vw, 2rem);
+    }
+    .pf-module-title {
+        font-weight: 700;
+        font-size: clamp(0.92rem, 1.05vw, 1.2rem);
+        color: #F8FAFC;
+    }
+    .pf-module-score-text {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(1.15rem, 1.4vw, 1.5rem);
+        font-weight: 800;
+        color: #00E5FF;
+    }
+
+    /* Modern Progress Bar Component */
+    .pf-progress-track {
+        width: 100%;
+        height: 8px;
+        background: rgba(30, 41, 59, 0.8);
+        border-radius: 9999px;
+        overflow: hidden;
+        margin: 0.45rem 0 0.65rem 0;
+    }
+    .pf-progress-fill {
+        height: 100%;
+        border-radius: 9999px;
+        background: linear-gradient(90deg, #0284C7, #00E5FF);
+        transition: width 0.3s ease;
+    }
+
+    /* Persona Cards */
+    .pf-persona-card {
+        background: rgba(14, 23, 44, 0.7);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 16px;
+        padding: clamp(1.1rem, 1.5vw, 1.6rem);
+        text-align: center;
+        transition: all 0.22s ease-in-out;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .pf-persona-card:hover {
+        border-color: #00E5FF;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(0, 229, 255, 0.15);
+    }
+    .pf-persona-icon {
+        font-size: clamp(2.2rem, 2.8vw, 3.2rem);
+        margin-bottom: 0.5rem;
+    }
+    .pf-persona-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(1.05rem, 1.25vw, 1.4rem);
+        font-weight: 700;
+        color: #F8FAFC;
+        margin-bottom: 0.35rem;
+    }
+    .pf-persona-desc {
+        font-size: clamp(0.8rem, 0.9vw, 0.95rem);
+        color: #94A3B8;
+        line-height: 1.45;
+        margin-bottom: 0.9rem;
+    }
+
+    /* Snapshot Cards */
+    .pf-snapshot-card {
+        background: linear-gradient(135deg, rgba(16, 26, 48, 0.8) 0%, rgba(12, 20, 38, 0.9) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 16px;
+        padding: clamp(1.1rem, 1.4vw, 1.6rem);
+        margin-bottom: 0.6rem;
+    }
+    .pf-snapshot-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: clamp(0.92rem, 1.05vw, 1.15rem);
+        font-weight: 700;
+        color: #F8FAFC;
+        margin-bottom: 0.4rem;
+    }
+
+    /* Primary CTA Section */
+    .pf-cta-card {
+        background: linear-gradient(135deg, rgba(16, 30, 58, 0.9) 0%, rgba(11, 20, 42, 0.95) 100%);
+        border: 1px solid #00E5FF;
+        border-radius: 20px;
+        padding: clamp(1.8rem, 2.5vw, 3rem);
+        margin-top: clamp(1.5rem, 2.5vw, 2.8rem);
+        box-shadow: 0 0 35px rgba(0, 229, 255, 0.2), inset 0 0 15px rgba(0, 229, 255, 0.05);
+        text-align: center;
+        position: relative;
+    }
+    .pf-cta-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+        font-weight: 800;
+        color: #F8FAFC;
+        margin-bottom: 0.45rem;
+    }
+    .pf-cta-sub {
+        font-size: clamp(0.95rem, 1.1vw, 1.25rem);
+        color: #94A3B8;
+        margin-bottom: 1.4rem;
+    }
+
+    /* Hero Recommendation Card for Rank 1 */
     .pf-hero-card {
-        background: linear-gradient(135deg, rgba(14, 28, 54, 0.9) 0%, rgba(10, 18, 38, 0.95) 100%);
-        border: 1px solid #00F0FF;
-        border-radius: 14px;
-        padding: 1.75rem;
+        background: linear-gradient(135deg, rgba(16, 30, 58, 0.9) 0%, rgba(11, 20, 42, 0.95) 100%);
+        border: 1px solid #00E5FF;
+        border-radius: 18px;
+        padding: clamp(1.4rem, 2vw, 2.2rem);
         margin-bottom: 1.5rem;
-        box-shadow: 0 0 25px rgba(0, 240, 255, 0.22), inset 0 0 15px rgba(0, 240, 255, 0.06);
+        box-shadow: 0 0 30px rgba(0, 229, 255, 0.22), inset 0 0 15px rgba(0, 229, 255, 0.06);
         position: relative;
         overflow: hidden;
     }
@@ -176,18 +380,18 @@ st.markdown(
         left: 0;
         width: 4px;
         height: 100%;
-        background: linear-gradient(180deg, #00F0FF 0%, #818CF8 100%);
-        box-shadow: 0 0 12px #00F0FF;
+        background: linear-gradient(180deg, #00E5FF 0%, #818CF8 100%);
+        box-shadow: 0 0 14px #00E5FF;
     }
 
-    /* Tech Badges & Glow Chips */
+    /* Badges */
     .pf-badge {
         display: inline-block;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
+        font-size: clamp(0.72rem, 0.8vw, 0.85rem);
         font-weight: 600;
-        padding: 0.25rem 0.6rem;
-        border-radius: 6px;
+        padding: 0.28rem 0.7rem;
+        border-radius: 8px;
         letter-spacing: 0.03em;
     }
     .pf-badge-blue {
@@ -226,136 +430,111 @@ st.markdown(
         border: 1px solid rgba(100, 116, 139, 0.4);
     }
 
-    /* Executive AI HUD Callout */
+    /* Executive AI Callout Box */
     .pf-callout {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(17, 24, 39, 0.95) 100%);
-        border-left: 4px solid #00F0FF;
-        border-radius: 0 10px 10px 0;
-        padding: 1.15rem 1.4rem;
-        margin: 1.25rem 0;
-        font-size: 0.925rem;
-        line-height: 1.6;
+        background: linear-gradient(135deg, rgba(16, 26, 48, 0.9) 0%, rgba(14, 22, 40, 0.95) 100%);
+        border-left: 4px solid #00E5FF;
+        border-radius: 0 14px 14px 0;
+        padding: clamp(1.2rem, 1.8vw, 1.8rem);
+        margin: 1.4rem 0;
+        font-size: clamp(0.92rem, 1.05vw, 1.15rem);
+        line-height: 1.65;
         color: #E2E8F0;
-        box-shadow: 0 4px 20px rgba(0, 240, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 24px rgba(0, 229, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
-    /* Archetype Dynamic Box */
-    .pf-archetype-box {
-        background-color: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(56, 189, 248, 0.2);
-        border-radius: 8px;
-        padding: 0.85rem 1.1rem;
-        margin-top: 0.85rem;
-        font-size: 0.85rem;
-        color: #CBD5E1;
-    }
-
-    /* Cyber Streamlit Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 1.5rem;
-        border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-        padding-bottom: 0.35rem;
-    }
-    .stTabs [data-baseweb="tab"] {
-        font-family: 'JetBrains Mono', 'Inter', monospace;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #94A3B8 !important;
-        padding: 0.6rem 0.5rem;
-        border-radius: 0px;
-        transition: all 0.2s ease;
-    }
-    .stTabs [data-baseweb="tab"]:hover {
-        color: #38BDF8 !important;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #00F0FF !important;
-        font-weight: 700 !important;
-        border-bottom: 2px solid #00F0FF !important;
-        text-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
-    }
-
-    /* Glowing Neon Cyber Buttons */
-    div.stButton > button:first-child {
+    /* Primary Gradient Glow Buttons */
+    div.stButton > button[data-testid="stBaseButton-primary"],
+    div.stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #0284C7 0%, #4F46E5 100%) !important;
         color: #FFFFFF !important;
         font-family: 'Space Grotesk', 'Inter', sans-serif !important;
-        font-size: 0.95rem !important;
+        font-size: clamp(0.92rem, 1.05vw, 1.15rem) !important;
         font-weight: 700 !important;
         border: 1px solid rgba(56, 189, 248, 0.5) !important;
-        border-radius: 10px !important;
-        padding: 0.7rem 1.6rem !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 0 15px rgba(2, 132, 199, 0.4) !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        border-radius: 12px !important;
+        padding: clamp(0.65rem, 0.9vw, 0.95rem) clamp(1.2rem, 1.8vw, 2rem) !important;
+        transition: all 0.22s ease !important;
+        box-shadow: 0 0 18px rgba(2, 132, 199, 0.35) !important;
     }
-    div.stButton > button:first-child:hover {
-        background: linear-gradient(135deg, #00F0FF 0%, #6366F1 100%) !important;
+    div.stButton > button[data-testid="stBaseButton-primary"]:hover,
+    div.stButton > button[kind="primary"]:hover {
+        background: linear-gradient(135deg, #00E5FF 0%, #6366F1 100%) !important;
         color: #080C15 !important;
         font-weight: 800 !important;
-        border-color: #00F0FF !important;
-        box-shadow: 0 0 25px rgba(0, 240, 255, 0.7) !important;
+        border-color: #00E5FF !important;
+        box-shadow: 0 0 28px rgba(0, 229, 255, 0.65) !important;
         transform: translateY(-2px) !important;
     }
 
-    /* Streamlit Widget Label Visibility Overrides */
+    /* Secondary Glassmorphism Buttons & Stepper */
+    div.stButton > button[data-testid="stBaseButton-secondary"],
+    div.stButton > button[kind="secondary"],
+    div.stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]) {
+        background: rgba(14, 23, 44, 0.75) !important;
+        color: #CBD5E1 !important;
+        font-family: 'Space Grotesk', 'Inter', sans-serif !important;
+        font-size: clamp(0.88rem, 1vw, 1.05rem) !important;
+        font-weight: 600 !important;
+        border: 1px solid rgba(56, 189, 248, 0.22) !important;
+        border-radius: 12px !important;
+        padding: clamp(0.6rem, 0.85vw, 0.85rem) clamp(1rem, 1.5vw, 1.6rem) !important;
+        transition: all 0.22s ease !important;
+        backdrop-filter: blur(12px) !important;
+    }
+    div.stButton > button[data-testid="stBaseButton-secondary"]:hover,
+    div.stButton > button[kind="secondary"]:hover,
+    div.stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]):hover {
+        border-color: #00E5FF !important;
+        color: #00E5FF !important;
+        background: rgba(16, 26, 48, 0.95) !important;
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.2) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    /* Sliders */
+    div[data-testid="stSlider"] {
+        padding: 0.2rem 0 0.5rem 0 !important;
+    }
+
+    /* Inputs Overrides */
     label[data-testid="stWidgetLabel"] p {
         color: #E2E8F0 !important;
         font-weight: 600 !important;
-        font-size: 0.9rem !important;
+        font-size: clamp(0.88rem, 0.95vw, 1.05rem) !important;
     }
     .stSelectbox div[data-baseweb="select"] > div,
     .stMultiSelect div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div {
-        background-color: #111827 !important;
+        background-color: #0B1120 !important;
         border-color: rgba(56, 189, 248, 0.3) !important;
         color: #F8FAFC !important;
+        border-radius: 12px !important;
     }
     .stSelectbox div[data-baseweb="select"] > div:hover,
     .stMultiSelect div[data-baseweb="select"] > div:hover {
-        border-color: #00F0FF !important;
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
+        border-color: #00E5FF !important;
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.2) !important;
     }
 
-    /* Multiselect tag pills */
+    /* Multiselect Tag */
     span[data-baseweb="tag"] {
         background-color: rgba(14, 165, 233, 0.25) !important;
         border: 1px solid rgba(56, 189, 248, 0.5) !important;
         color: #38BDF8 !important;
+        border-radius: 8px !important;
     }
 
-    /* Expander Styling */
+    /* Expander */
     div[data-testid="stExpander"] {
-        background-color: rgba(15, 23, 42, 0.6) !important;
-        border: 1px solid rgba(56, 189, 248, 0.25) !important;
-        border-radius: 10px !important;
+        background-color: rgba(14, 23, 44, 0.65) !important;
+        border: 1px solid rgba(56, 189, 248, 0.22) !important;
+        border-radius: 16px !important;
     }
     div[data-testid="stExpander"] summary {
         color: #E2E8F0 !important;
         font-weight: 600 !important;
-    }
-
-    /* Metric Widgets */
-    div[data-testid="stMetricValue"] {
-        color: #00F0FF !important;
-        font-family: 'Space Grotesk', sans-serif !important;
-        text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
-    }
-    div[data-testid="stMetricLabel"] p {
-        color: #94A3B8 !important;
-        font-weight: 500 !important;
-    }
-
-    /* Slider Accent & Number Input */
-    .stSlider {
-        margin-bottom: 0.5rem;
-    }
-    .stCheckbox {
-        margin-bottom: 0.45rem;
-    }
-    .stCheckbox label p {
-        color: #E2E8F0 !important;
-        font-size: 0.85rem !important;
+        font-size: clamp(0.95rem, 1.05vw, 1.2rem) !important;
     }
 
     /* Custom Scrollbars */
@@ -364,7 +543,7 @@ st.markdown(
         height: 8px;
     }
     ::-webkit-scrollbar-track {
-        background: #080C15;
+        background: #070B14;
     }
     ::-webkit-scrollbar-thumb {
         background: #1E293B;
@@ -372,7 +551,7 @@ st.markdown(
         border: 1px solid rgba(56, 189, 248, 0.2);
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: #00F0FF;
+        background: #00E5FF;
     }
     </style>
     """,
@@ -825,51 +1004,6 @@ def load_certification_catalog() -> List[Dict[str, Any]]:
             "exam_guide_url": "https://d1.awsstatic.com/training-and-certification/docs-dev-associate/AWS-Certified-Developer-Associate_Exam-Guide.pdf"
         },
         {
-            "id": "meta-backend",
-            "title": "Meta Back-End Developer Professional Certificate",
-            "issuer": "Coursera / Meta",
-            "level": "Intermediate",
-            "target_years": ["2nd Year", "3rd Year", "4th Year"],
-            "domains": ["Software Engineering", "Web Development", "Cloud & DevOps"],
-            "skills": ["Modern Web Stack", "Python Programming", "SQL & Relational Querying", "Database Management Systems"],
-            "skill_keys": ["WebStack", "Python", "SQL", "DBMS"],
-            "vector": {"WebStack": 0.95, "Python": 0.9, "SQL": 0.85, "DBMS": 0.8},
-            "description": "Comprehensive back-end APIs, Django, REST microservices, relational database modeling, Linux servers, and cloud containerization.",
-            "official_url": "https://www.coursera.org/professional-certificates/meta-back-end-developer",
-            "prep_url": "https://www.coursera.org/professional-certificates/meta-back-end-developer",
-            "exam_guide_url": "https://www.metacareers.com/career-programs/certificates"
-        },
-        {
-            "id": "fcc-fullstack",
-            "title": "freeCodeCamp Full-Stack Developer Path",
-            "issuer": "freeCodeCamp",
-            "level": "Beginner to Intermediate",
-            "target_years": ["1st Year", "2nd Year", "3rd Year"],
-            "domains": ["Software Engineering", "Web Development"],
-            "skills": ["Modern Web Stack", "Data Structures & Algorithms", "SQL & Relational Querying"],
-            "skill_keys": ["WebStack", "DSA", "SQL"],
-            "vector": {"WebStack": 1.0, "DSA": 0.75, "SQL": 0.65},
-            "description": "300+ hours of verified project-based builds in Responsive Web Design, JavaScript Algorithms, Front-End Libraries, and Node.js APIs.",
-            "official_url": "https://www.freecodecamp.org/learn/",
-            "prep_url": "https://www.freecodecamp.org/learn/",
-            "exam_guide_url": "https://www.freecodecamp.org/learn/"
-        },
-        {
-            "id": "oracle-java-assoc",
-            "title": "Oracle Certified Associate: Java SE Programmer (1Z0-808)",
-            "issuer": "Oracle Corporation",
-            "level": "Intermediate",
-            "target_years": ["2nd Year", "3rd Year", "4th Year"],
-            "domains": ["Software Engineering", "Core Systems"],
-            "skills": ["Java / C++ Systems", "Object-Oriented Programming", "Data Structures & Algorithms"],
-            "skill_keys": ["Java_CPP", "OOP", "DSA"],
-            "vector": {"Java_CPP": 1.0, "OOP": 0.95, "DSA": 0.75},
-            "description": "Validates rigorous core Java programming, object-oriented encapsulation, exception handling, collections, and algorithmic fluency.",
-            "official_url": "https://education.oracle.com/oracle-certified-associate-java-se-8-programmer/trackp_333",
-            "prep_url": "https://mylearn.oracle.com/ou/learning-path/java-explorer/79708",
-            "exam_guide_url": "https://education.oracle.com/java-se-8-programmer-i/pexam_1Z0-808"
-        },
-        {
             "id": "aws-solutions-architect",
             "title": "AWS Certified Solutions Architect – Associate (SAA-C03)",
             "issuer": "Amazon Web Services",
@@ -885,51 +1019,6 @@ def load_certification_catalog() -> List[Dict[str, Any]]:
             "exam_guide_url": "https://d1.awsstatic.com/training-and-certification/docs-sa-assoc/AWS-Certified-Solutions-Architect-Associate_Exam-Guide.pdf"
         },
         {
-            "id": "aws-cloud-practitioner",
-            "title": "AWS Certified Cloud Practitioner (CLF-C02)",
-            "issuer": "Amazon Web Services",
-            "level": "Foundational",
-            "target_years": ["1st Year", "2nd Year"],
-            "domains": ["Cloud & DevOps", "Software Engineering", "Infrastructure & Networking"],
-            "skills": ["Cloud Architecture & Docker", "OS & Computer Networks"],
-            "skill_keys": ["CloudDocker", "OS_Networks"],
-            "vector": {"CloudDocker": 0.85, "OS_Networks": 0.55},
-            "description": "Foundational understanding of high-level AWS cloud concepts, security models, core compute services, and billing fundamentals.",
-            "official_url": "https://aws.amazon.com/certification/certified-cloud-practitioner/",
-            "prep_url": "https://aws.amazon.com/training/digital/",
-            "exam_guide_url": "https://d1.awsstatic.com/training-and-certification/docs-cloud-practitioner/AWS-Certified-Cloud-Practitioner_Exam-Guide.pdf"
-        },
-        {
-            "id": "gcp-data-engineer",
-            "title": "Google Cloud Professional Data Engineer",
-            "issuer": "Google Cloud",
-            "level": "Professional",
-            "target_years": ["3rd Year", "4th Year"],
-            "domains": ["Data & Analytics", "Artificial Intelligence", "Database & Big Data", "Cloud & DevOps"],
-            "skills": ["SQL & Relational Querying", "Cloud Architecture & Docker", "Python Programming", "Machine Learning & AI", "Database Management Systems"],
-            "skill_keys": ["SQL", "CloudDocker", "Python", "ML_AI", "DBMS"],
-            "vector": {"SQL": 1.0, "CloudDocker": 0.85, "Python": 0.75, "ML_AI": 0.75, "DBMS": 0.85},
-            "description": "Validates data processing systems, BigQuery analytics, Dataflow pipelines, Pub/Sub event streams, and scalable warehousing.",
-            "official_url": "https://cloud.google.com/learn/certification/data-engineer",
-            "prep_url": "https://www.cloudskillsboost.google/paths/16",
-            "exam_guide_url": "https://cloud.google.com/learn/certification/guides/data-engineer"
-        },
-        {
-            "id": "google-data-analytics",
-            "title": "Google Data Analytics Professional Certificate",
-            "issuer": "Coursera / Google",
-            "level": "Beginner to Intermediate",
-            "target_years": ["1st Year", "2nd Year", "3rd Year"],
-            "domains": ["Data & Analytics", "Agile & Project Management"],
-            "skills": ["SQL & Relational Querying", "Database Management Systems", "Mathematics & Statistics"],
-            "skill_keys": ["SQL", "DBMS", "Math_Stats"],
-            "vector": {"SQL": 1.0, "DBMS": 0.85, "Math_Stats": 0.75},
-            "description": "Covers practical data wrangling, SQL calculations, Tableau visual storytelling, and statistical analysis for executive decision-making.",
-            "official_url": "https://www.coursera.org/professional-certificates/google-data-analytics",
-            "prep_url": "https://grow.google/certificates/data-analytics/",
-            "exam_guide_url": "https://grow.google/certificates/data-analytics/"
-        },
-        {
             "id": "tf-dev-cert",
             "title": "TensorFlow Developer Certificate",
             "issuer": "DeepLearning.AI / Google",
@@ -943,141 +1032,6 @@ def load_certification_catalog() -> List[Dict[str, Any]]:
             "official_url": "https://www.deeplearning.ai/courses/tensorflow-developer-professional-certificate/",
             "prep_url": "https://www.tensorflow.org/certificate",
             "exam_guide_url": "https://www.tensorflow.org/extras/surveys/candidate_handbook.pdf"
-        },
-        {
-            "id": "ibm-ai-engineer",
-            "title": "IBM AI Engineering Professional Certificate",
-            "issuer": "edX / IBM",
-            "level": "Intermediate",
-            "target_years": ["2nd Year", "3rd Year", "4th Year"],
-            "domains": ["Artificial Intelligence", "Data & Analytics"],
-            "skills": ["Machine Learning & AI", "Python Programming", "Mathematics & Statistics"],
-            "skill_keys": ["ML_AI", "Python", "Math_Stats"],
-            "vector": {"ML_AI": 1.0, "Python": 0.85, "Math_Stats": 0.8},
-            "description": "Comprehensive PyTorch, Scikit-Learn, computer vision, natural language transformers, and neural networks on edX.",
-            "official_url": "https://www.edx.org/certificates/professional-certificate/ibm-ai-engineering",
-            "prep_url": "https://www.edx.org/certificates/professional-certificate/ibm-ai-engineering",
-            "exam_guide_url": "https://www.ibm.com/training/badge/ai-engineer"
-        },
-        {
-            "id": "databricks-assoc-spark",
-            "title": "Databricks Certified Associate Developer for Apache Spark",
-            "issuer": "Databricks",
-            "level": "Intermediate",
-            "target_years": ["3rd Year", "4th Year"],
-            "domains": ["Data & Analytics", "Database & Big Data", "Software Engineering"],
-            "skills": ["Python Programming", "SQL & Relational Querying", "Database Management Systems"],
-            "skill_keys": ["Python", "SQL", "DBMS"],
-            "vector": {"Python": 0.9, "SQL": 0.9, "DBMS": 0.85},
-            "description": "Assesses deep understanding of the Spark architecture, distributed partitions, and DataFrame manipulation at scale.",
-            "official_url": "https://www.databricks.com/learn/certification/spark-developer-associate",
-            "prep_url": "https://academy.databricks.com/",
-            "exam_guide_url": "https://www.databricks.com/sites/default/files/2023-01/Databricks-Certified-Associate-Developer-for-Apache-Spark-3.0-Exam-Guide.pdf"
-        },
-        {
-            "id": "cka-kubernetes",
-            "title": "Certified Kubernetes Administrator (CKA)",
-            "issuer": "The Linux Foundation / CNCF",
-            "level": "Advanced",
-            "target_years": ["3rd Year", "4th Year"],
-            "domains": ["Cloud & DevOps", "Infrastructure & Networking", "Software Engineering"],
-            "skills": ["Cloud Architecture & Docker", "OS & Computer Networks", "Cybersecurity Defense"],
-            "skill_keys": ["CloudDocker", "OS_Networks", "Cybersecurity"],
-            "vector": {"CloudDocker": 1.0, "OS_Networks": 0.85, "Cybersecurity": 0.65},
-            "description": "Rigorous hands-on performance exam demonstrating mastery in Kubernetes cluster setup, overlay networking, storage, and pod scaling.",
-            "official_url": "https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/",
-            "prep_url": "https://training.linuxfoundation.org/training/kubernetes-fundamentals/",
-            "exam_guide_url": "https://docs.linuxfoundation.org/tc-docs/certification/important-instructions-cka-ckad"
-        },
-        {
-            "id": "comptia-sec-plus",
-            "title": "CompTIA Security+ (SY0-701)",
-            "issuer": "CompTIA",
-            "level": "Intermediate",
-            "target_years": ["2nd Year", "3rd Year", "4th Year"],
-            "domains": ["Cybersecurity & Defense", "Infrastructure & Networking"],
-            "skills": ["Cybersecurity Defense", "OS & Computer Networks"],
-            "skill_keys": ["Cybersecurity", "OS_Networks"],
-            "vector": {"Cybersecurity": 1.0, "OS_Networks": 0.85},
-            "description": "Global benchmark in enterprise cyber posture, cryptography, incident response, network auditing, and zero trust architectures.",
-            "official_url": "https://www.comptia.org/certifications/security",
-            "prep_url": "https://www.comptia.org/training/certmaster-learn/security",
-            "exam_guide_url": "https://www.comptia.org/training/resources/exam-objectives"
-        },
-        {
-            "id": "cisco-ccna",
-            "title": "Cisco Certified Network Associate (CCNA 200-301)",
-            "issuer": "Cisco",
-            "level": "Associate",
-            "target_years": ["2nd Year", "3rd Year", "4th Year"],
-            "domains": ["Infrastructure & Networking", "Cybersecurity & Defense", "Cloud & DevOps"],
-            "skills": ["OS & Computer Networks", "Cybersecurity Defense", "Cloud Architecture & Docker"],
-            "skill_keys": ["OS_Networks", "Cybersecurity", "CloudDocker"],
-            "vector": {"OS_Networks": 1.0, "Cybersecurity": 0.65, "CloudDocker": 0.5},
-            "description": "Validates foundational networking, IP routing protocols, security fundamentals, Cisco IOS configurations, and network automation.",
-            "official_url": "https://www.cisco.com/c/en/us/training-events/training-certifications/certifications/associate/ccna.html",
-            "prep_url": "https://learningnetwork.cisco.com/s/ccna",
-            "exam_guide_url": "https://learningcontent.cisco.com/documents/marketing/exam-topics/200-301-CCNA.pdf"
-        },
-        {
-            "id": "pmi-csm",
-            "title": "Certified ScrumMaster (CSM) / PMI-ACP",
-            "issuer": "Scrum Alliance / PMI",
-            "level": "Beginner to Intermediate",
-            "target_years": ["2nd Year", "3rd Year", "4th Year"],
-            "domains": ["Agile & Project Management", "Management & Consulting"],
-            "skills": ["Software Engineering Principles", "Database Management Systems"],
-            "skill_keys": ["SE_Principles", "DBMS"],
-            "vector": {"SE_Principles": 1.0, "DBMS": 0.4},
-            "description": "Demonstrates practical Agile iteration workflows, sprint backlogs, team facilitation, and Scrum project governance.",
-            "official_url": "https://www.scrumalliance.org/get-certified/scrum-master-track/certified-scrummaster",
-            "prep_url": "https://www.pmi.org/certifications/agile-acp",
-            "exam_guide_url": "https://www.scrumalliance.org/certifications/csm-certification"
-        },
-        {
-            "id": "unity-programmer",
-            "title": "Unity Certified Professional: Programmer",
-            "issuer": "Unity Technologies",
-            "level": "Intermediate to Advanced",
-            "target_years": ["3rd Year", "4th Year"],
-            "domains": ["Game Development & Graphics", "C++ & Systems", "Software Engineering"],
-            "skills": ["Java / C++ Systems", "Mathematics & Statistics", "Object-Oriented Programming"],
-            "skill_keys": ["Java_CPP", "Math_Stats", "OOP"],
-            "vector": {"Java_CPP": 1.0, "Math_Stats": 0.85, "OOP": 0.75},
-            "description": "Certifies core real-time 3D game physics, custom shaders, gameplay scripting, memory management, and Unity profiler tuning.",
-            "official_url": "https://unity.com/products/unity-certifications/professional-programmer",
-            "prep_url": "https://learn.unity.com/",
-            "exam_guide_url": "https://unity.com/products/unity-certifications"
-        },
-        {
-            "id": "autodesk-inventor",
-            "title": "Autodesk Certified Professional (AutoCAD / Inventor)",
-            "issuer": "Autodesk",
-            "level": "Intermediate to Advanced",
-            "target_years": ["2nd Year", "3rd Year", "4th Year"],
-            "domains": ["CAD/CAM & Mechanical", "Engineering Architecture"],
-            "skills": ["Mathematics & Statistics", "Software Engineering Principles"],
-            "skill_keys": ["Math_Stats", "SE_Principles"],
-            "vector": {"Math_Stats": 1.0, "SE_Principles": 0.65},
-            "description": "Industry benchmark for parametric solid modeling, finite element analysis, 3D assembly drafting, and CNC manufacturing workflows.",
-            "official_url": "https://www.autodesk.com/certification/all-certifications",
-            "prep_url": "https://www.autodesk.com/certification/learn",
-            "exam_guide_url": "https://www.autodesk.com/certification/all-certifications"
-        },
-        {
-            "id": "google-ux-cert",
-            "title": "Google UX Design Professional Certificate",
-            "issuer": "Coursera / Google",
-            "level": "Beginner to Intermediate",
-            "target_years": ["1st Year", "2nd Year", "3rd Year", "4th Year"],
-            "domains": ["UI/UX Design", "Web Development", "Product & Media"],
-            "skills": ["Modern Web Stack", "Software Engineering Principles", "Mobile Development"],
-            "skill_keys": ["WebStack", "SE_Principles", "MobileDev"],
-            "vector": {"WebStack": 0.85, "SE_Principles": 0.75, "MobileDev": 0.65},
-            "description": "End-to-end user experience design, rapid Figma prototyping, accessibility heuristics, persona modeling, and usability trials.",
-            "official_url": "https://www.coursera.org/professional-certificates/google-ux-design",
-            "prep_url": "https://grow.google/certificates/ux-design/",
-            "exam_guide_url": "https://grow.google/certificates/ux-design/"
         }
     ]
 
@@ -1143,7 +1097,7 @@ def generate_benchmark_dataset(samples_per_class: int = 50) -> pd.DataFrame:
         pref_styles = CAREER_UNIVERSE[career]["target_workstyles"]
         req_softs = CAREER_UNIVERSE[career]["required_soft_skills"]
 
-        for i in range(samples_per_class):
+        for _ in range(samples_per_class):
             gpa = round(float(np.clip(np.random.normal(3.45, 0.28), 2.20, 4.00)), 2)
             year = np.random.choice(year_choices, p=[0.1, 0.25, 0.45, 0.20])
             dsa = int(np.clip(np.random.normal(bench["DSA"], 7), 40, 100))
@@ -1675,7 +1629,7 @@ def calculate_shap_proxy_deltas(profile: StudentProfile, top_career: str) -> pd.
         feature_deltas.append({
             "Feature": label_map.get(skill_name, skill_name),
             "Delta": round(delta, 1),
-            "Color": "#00F0FF" if delta >= 0 else "#F43F5E",
+            "Color": "#00F0FF" if delta >= 0 else "#FB7185",
         })
 
     # Add GPA and Internship drivers
@@ -1683,14 +1637,14 @@ def calculate_shap_proxy_deltas(profile: StudentProfile, top_career: str) -> pd.
     feature_deltas.append({
         "Feature": "Cumulative GPA",
         "Delta": round(gpa_delta, 1),
-        "Color": "#00F0FF" if gpa_delta >= 0 else "#F43F5E",
+        "Color": "#00F0FF" if gpa_delta >= 0 else "#FB7185",
     })
 
     intern_delta = 7.5 if profile.has_internship else -4.0
     feature_deltas.append({
         "Feature": "Internship Experience",
         "Delta": round(intern_delta, 1),
-        "Color": "#00F0FF" if intern_delta >= 0 else "#F43F5E",
+        "Color": "#00F0FF" if intern_delta >= 0 else "#FB7185",
     })
 
     # Soft Skill Archetype Alignment Driver
@@ -1701,7 +1655,7 @@ def calculate_shap_proxy_deltas(profile: StudentProfile, top_career: str) -> pd.
     feature_deltas.append({
         "Feature": "Archetype Soft Skills",
         "Delta": round(soft_delta, 1),
-        "Color": "#00F0FF" if soft_delta >= 0 else "#F43F5E",
+        "Color": "#00F0FF" if soft_delta >= 0 else "#FB7185",
     })
 
     df = pd.DataFrame(feature_deltas)
@@ -1785,17 +1739,9 @@ def recommend_certifications(
     target_career: str = "Software Engineer",
     student_year: str = "3rd Year",
 ) -> List[Dict[str, Any]]:
-    """
-    Computes Gap-Weighted Cosine Similarity with Domain Pruning and Academic Tier Matching.
-    
-    1. Weighted Gap Vector: G_weighted = G * W_urgency (High=3.0, Medium=2.0, Minor=1.0)
-    2. Domain Pruning: Filter candidate certifications by career domain relevance.
-    3. Tier Matching: Align certification difficulty with student's academic year.
-    4. Exact Dynamic Gap Coverage %: Measures true weighted coverage ratio without static floors.
-    """
+    """Computes Gap-Weighted Cosine Similarity with Domain Pruning and Academic Tier Matching."""
     catalog = load_certification_catalog()
-    
-    # Domain Mapping for 9 Career Archetypes
+
     CAREER_DOMAINS = {
         "Software Engineer": {"Software Engineering", "Web Development", "Cloud & DevOps", "Core Systems"},
         "Data Scientist": {"Data & Analytics", "Artificial Intelligence", "Database & Big Data"},
@@ -1807,19 +1753,18 @@ def recommend_certifications(
         "CAD-CAM Engineer": {"CAD/CAM & Mechanical", "Engineering Architecture"},
         "Cybersecurity Specialist": {"Cybersecurity & Defense", "Infrastructure & Networking", "Cloud & DevOps"},
     }
-    
+
     allowed_domains = CAREER_DOMAINS.get(target_career, {"Software Engineering", "Cloud & DevOps"})
-    
-    # 1. Build Urgency-Weighted Gap Vector G_weighted
+
     urgency_weights = {
         "High Urgency": 3.0,
         "Medium Priority": 2.0,
         "Low / Minor": 1.0,
     }
-    
+
     weighted_gaps: Dict[str, float] = {}
     total_gap_weight = 0.0
-    
+
     for g in gaps:
         sk = g["skill_key"]
         w = urgency_weights.get(g.get("urgency", "Medium Priority"), 2.0)
@@ -1827,28 +1772,24 @@ def recommend_certifications(
         weighted_val = def_val * w
         weighted_gaps[sk] = weighted_val
         total_gap_weight += weighted_val
-        
+
     mag_gap = math.sqrt(sum(v ** 2 for v in weighted_gaps.values())) if weighted_gaps else 0.0
 
     scored_certs = []
-    
+
     for cert in catalog:
         cert_domains = set(cert.get("domains", []))
         cert_keys = cert.get("skill_keys", cert.get("skills", []))
         cert_vector = cert.get("vector", {})
         if not cert_vector:
             cert_vector = {k: 1.0 for k in cert_keys}
-            
-        # 2. Domain Pruning & Compatibility Multiplier
+
         domain_overlap = cert_domains.intersection(allowed_domains)
         if not domain_overlap:
-            # Harsh penalty for unrelated domains to prevent pollution
             domain_multiplier = 0.10
         else:
-            # Overlap in target career domains
             domain_multiplier = 1.30 + (0.15 * len(domain_overlap))
-            
-        # 3. Tier & Academic Year Alignment Multiplier
+
         level_str = cert.get("level", "").lower()
         if student_year in ["1st Year", "2nd Year"]:
             if "foundational" in level_str or "beginner" in level_str:
@@ -1857,7 +1798,7 @@ def recommend_certifications(
                 tier_multiplier = 1.05
             else:
                 tier_multiplier = 0.70
-        else:  # 3rd Year or 4th Year
+        else:
             if "intermediate" in level_str or "associate" in level_str:
                 tier_multiplier = 1.25
             elif "advanced" in level_str or "professional" in level_str:
@@ -1865,38 +1806,35 @@ def recommend_certifications(
             else:
                 tier_multiplier = 0.85
 
-        # 4. Compute Weighted Cosine Similarity
         dot_product = 0.0
         covered_gap_weight = 0.0
         matched_skill_names = []
-        
+
         for k, cert_w in cert_vector.items():
             if k in weighted_gaps:
                 gap_w = weighted_gaps[k]
                 dot_product += gap_w * cert_w
                 covered_gap_weight += gap_w * cert_w
-                
-                # Find skill display name
+
                 for g in gaps:
                     if g["skill_key"] == k and g["skill_name"] not in matched_skill_names:
                         matched_skill_names.append(g["skill_name"])
 
         mag_cert = math.sqrt(sum(v ** 2 for v in cert_vector.values())) if cert_vector else 1.0
-        
+
         if mag_gap > 0 and mag_cert > 0 and dot_product > 0:
             cosine_sim = dot_product / (mag_gap * mag_cert)
         else:
             cosine_sim = 0.05
-            
+
         final_ranking_score = cosine_sim * domain_multiplier * tier_multiplier
-        
-        # 5. Exact Dynamic Gap Coverage % Calculation
+
         if total_gap_weight > 0 and covered_gap_weight > 0:
             raw_coverage = (covered_gap_weight / total_gap_weight) * 100.0
             coverage_pct = int(min(98, max(18, round(raw_coverage * (1.1 if domain_overlap else 0.5)))))
         else:
             coverage_pct = 20 if domain_overlap else 10
-            
+
         if not matched_skill_names:
             matched_skill_names = cert.get("skills", [])[:2]
 
@@ -1917,7 +1855,6 @@ def recommend_certifications(
             "covered_skills": matched_skill_names[:3],
         })
 
-    # Sort by final ranking score descending
     scored_certs.sort(key=lambda x: x["final_score"], reverse=True)
     return scored_certs[:3]
 
@@ -1947,7 +1884,7 @@ def generate_executive_narrative(profile: StudentProfile, top_career: Dict[str, 
 
 
 # -----------------------------------------------------------------------------
-# 8. STREAMLIT APPLICATION UI
+# 8. UI HELPER UTILITIES & PRESET MANAGEMENT
 # -----------------------------------------------------------------------------
 
 ALL_PEOPLE_SKILLS = [
@@ -1983,6 +1920,24 @@ ALL_EXEC_SKILLS = [
     "Process & Protocol Adherence",
 ]
 ALL_24_SOFT_SKILLS = ALL_PEOPLE_SKILLS + ALL_IDEAS_SKILLS + ALL_DATA_SKILLS + ALL_EXEC_SKILLS
+
+
+def get_score_status(score: float) -> Tuple[str, str, str]:
+    """
+    Returns (status_label, badge_color_hex, badge_bg_rgba) for a given score (0-100).
+    0-49: Needs Improvement (#FB7185)
+    50-69: Developing (#FBBF24)
+    70-84: Strong (#38BDF8)
+    85-100: Excellent (#34D399)
+    """
+    if score >= 85:
+        return "Excellent", "#34D399", "rgba(52, 211, 153, 0.18)"
+    elif score >= 70:
+        return "Strong", "#38BDF8", "rgba(56, 189, 248, 0.18)"
+    elif score >= 50:
+        return "Developing", "#FBBF24", "rgba(251, 191, 36, 0.18)"
+    else:
+        return "Needs Improvement", "#FB7185", "rgba(251, 113, 133, 0.18)"
 
 
 def apply_preset(preset_key: str) -> None:
@@ -2067,7 +2022,6 @@ def apply_preset(preset_key: str) -> None:
     for s in softs:
         st.session_state[f"soft_{s}"] = True
 
-    # Pre-calculate guidance data for Tab 2
     elec_dict = {e: 85 for e in elecs}
     prof = StudentProfile(
         gpa=gpa,
@@ -2138,98 +2092,234 @@ if "evaluation_data" not in st.session_state:
     }
 
 
-# Top Header
+# -----------------------------------------------------------------------------
+# 9. STREAMLIT APPLICATION VIEW & STEPPER NAVIGATION
+# -----------------------------------------------------------------------------
+
+# 1. Global Platform Heading (At the very top of the page)
 st.markdown(
     """
-    <div class="pf-header">
-        <span class="pf-header-badge">⚡ QUANTUM CAREER INTELLIGENCE SYSTEM // v2.4</span>
-        <h1 class="pf-title">PathFinder AI</h1>
-        <p class="pf-subtitle">Transparent multi-engine trajectory modeling, 6-archetype soft-skill mapping, dataset studio, and learning pathways.</p>
+    <div class="pf-hero-header" style="margin-bottom: 1.25rem;">
+        <span class="pf-hero-badge">⚡ AI-POWERED CAREER INTELLIGENCE</span>
+        <h1 class="pf-hero-title">PATHFINDER AI</h1>
+        <p class="pf-hero-subtitle">Discover your strengths. Understand your options. Build your path.</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-tab1, tab2, tab3, tab4 = st.tabs([
-    "01 // Profile Intake",
-    "02 // Guidance & Roadmap",
-    "03 // Dataset & Model Studio",
-    "04 // History Log",
-])
+# Initialize active navigation state if not set
+if "active_nav_tab" not in st.session_state:
+    st.session_state["active_nav_tab"] = "① Profile"
+
+# 2. Top Stepper Navigation Header (Right below heading)
+nav_steps = [
+    ("① Profile", "Profile Intake & Strengths", "👤"),
+    ("② Career Roadmap", "AI Career Guidance & Roadmap", "🧭"),
+    ("③ Model Studio", "Dataset & Model Studio", "🔬"),
+    ("④ History", "Evaluation History & Logs", "📋"),
+]
+
+nav_cols = st.columns(4)
+for idx, (tab_id, tab_label, tab_icon) in enumerate(nav_steps):
+    with nav_cols[idx]:
+        is_active = (st.session_state["active_nav_tab"] == tab_id)
+        if st.button(
+            f"{tab_icon} {tab_id} • {tab_label}",
+            key=f"nav_step_btn_{idx}",
+            type="primary" if is_active else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state["active_nav_tab"] = tab_id
+            st.rerun()
+
+current_tab = st.session_state["active_nav_tab"]
 
 
 # -----------------------------------------------------------------------------
-# TAB 1: PROFILE INTAKE FORM (4-COLUMN SOFT SKILLS & DYNAMIC ELECTIVES)
+# TAB 1: ① PROFILE (CAREER PROFILE INTAKE & COMPETENCIES)
 # -----------------------------------------------------------------------------
-with tab1:
-    # Preset Profiles Quick Loader
-    with st.expander("⚡ Quick Load Sample Student Profiles (Optional)", expanded=False):
-        qcol1, qcol2, qcol3, qcol4 = st.columns(4)
-        if qcol1.button("🤖 Load AI Engineer Profile", use_container_width=True):
+if current_tab == "① Profile":
+    # 1. Quick Load Persona Profile Cards
+    st.markdown(
+        "<p style='font-size: clamp(0.85rem, 0.95vw, 1.05rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin-top: 0.5rem; margin-bottom: 0.75rem;'>⚡ Quick Load Student Personas</p>",
+        unsafe_allow_html=True,
+    )
+    pcol1, pcol2, pcol3, pcol4 = st.columns(4)
+
+    with pcol1:
+        st.markdown(
+            """
+            <div class="pf-persona-card">
+                <div>
+                    <div class="pf-persona-icon">🤖</div>
+                    <div class="pf-persona-title">AI Engineer</div>
+                    <div class="pf-persona-desc">Deep neural networks, PyTorch, research algorithms & mathematics.</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Load Profile", key="btn_p_ai", use_container_width=True):
             apply_preset("ai_engineer")
             st.rerun()
 
-        if qcol2.button("☁️ Load Cloud Architect Profile", use_container_width=True):
+    with pcol2:
+        st.markdown(
+            """
+            <div class="pf-persona-card">
+                <div>
+                    <div class="pf-persona-icon">☁️</div>
+                    <div class="pf-persona-title">Cloud Architect</div>
+                    <div class="pf-persona-desc">Distributed topologies, Kubernetes, Linux systems & DevOps infrastructure.</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Load Profile", key="btn_p_cloud", use_container_width=True):
             apply_preset("cloud_architect")
             st.rerun()
 
-        if qcol3.button("💻 Load Full-Stack Engineer Profile", use_container_width=True):
+    with pcol3:
+        st.markdown(
+            """
+            <div class="pf-persona-card">
+                <div>
+                    <div class="pf-persona-icon">💻</div>
+                    <div class="pf-persona-title">Full-Stack Engineer</div>
+                    <div class="pf-persona-desc">Modern web architectures, scalable microservices & frontend systems.</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Load Profile", key="btn_p_fs", use_container_width=True):
             apply_preset("fullstack_engineer")
             st.rerun()
 
-        if qcol4.button("📈 Load IT Business Analyst Profile", use_container_width=True):
+    with pcol4:
+        st.markdown(
+            """
+            <div class="pf-persona-card">
+                <div>
+                    <div class="pf-persona-icon">📊</div>
+                    <div class="pf-persona-title">IT Business Analyst</div>
+                    <div class="pf-persona-desc">Agile sprint governance, stakeholder roadmaps & SQL data modeling.</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Load Profile", key="btn_p_ba", use_container_width=True):
             apply_preset("business_analyst")
             st.rerun()
 
-    # Section 1: Academic Standing & Core Modules
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 2. Section: Academic Foundation (Direct Sliders with Icons & Marks)
     st.markdown(
         """
         <div class="pf-card">
-            <div class="pf-card-title">⚡ 01. Academic Standing & Core Modules</div>
-            <div class="pf-card-desc">Enter cumulative performance metrics and compulsory undergraduate course scores.</div>
+            <div class="pf-card-title">🎓 Your Academic Foundation</div>
+            <div class="pf-card-desc">Enter your university cumulative GPA standing and compulsory computer science foundation module marks (0–100).</div>
         """,
         unsafe_allow_html=True,
     )
 
-    col_gpa, col_year = st.columns([1, 1])
+    col_gpa, col_year = st.columns(2)
+
     with col_gpa:
-        in_gpa = st.number_input(
-            "Cumulative GPA (0.00 – 4.00)",
+        in_gpa = st.slider(
+            "🎓 Cumulative GPA (0.00 – 4.00 Scale)",
             min_value=0.00,
             max_value=4.00,
-            value=st.session_state.get("preset_gpa", 3.40),
+            value=float(st.session_state.get("preset_gpa", 3.40)),
             step=0.01,
-            help="Your overall university GPA across completed semesters.",
+            key="preset_gpa",
+            help="Your overall university cumulative GPA (0.00 to 4.00).",
         )
+
     with col_year:
         year_list = ["1st Year", "2nd Year", "3rd Year", "4th Year"]
         def_year = st.session_state.get("preset_year", "3rd Year")
         in_year = st.selectbox(
-            "Academic Year",
+            "📅 Academic Year Level",
             year_list,
             index=year_list.index(def_year) if def_year in year_list else 2,
-            help="Your current year of undergraduate enrollment.",
+            help="Current year of university study.",
+            key="input_year",
         )
 
-    st.markdown("<p style='font-size: 0.875rem; font-weight: 700; color: #38BDF8; margin-top: 0.85rem; letter-spacing: 0.02em;'>Compulsory Core Modules (Scores 0 – 100):</p>", unsafe_allow_html=True)
+    st.markdown(
+        "<p style='font-size: clamp(0.92rem, 1.05vw, 1.15rem); font-weight: 700; color: #38BDF8; margin-top: 1.25rem; margin-bottom: 0.75rem;'>Compulsory Core CS Module Marks (0 – 100):</p>",
+        unsafe_allow_html=True,
+    )
+
     col_m1, col_m2 = st.columns(2)
+
     with col_m1:
-        m_dsa = st.slider("1. Data Structures & Algorithms", 0, 100, st.session_state.get("preset_dsa", 82), key="slide_dsa")
-        m_oop = st.slider("2. Object-Oriented Programming", 0, 100, st.session_state.get("preset_oop", 78), key="slide_oop")
-        m_dbms = st.slider("3. Database Management Systems", 0, 100, st.session_state.get("preset_dbms", 75), key="slide_dbms")
+        m_dsa = st.slider(
+            "🧠 1. Data Structures & Algorithms",
+            min_value=0,
+            max_value=100,
+            value=st.session_state.get("slide_dsa", 82),
+            key="slide_dsa",
+            help="Algorithmic complexity, trees, graphs, sorting, and dynamic programming.",
+        )
+        m_dbms = st.slider(
+            "🗄️ 3. Database Management Systems",
+            min_value=0,
+            max_value=100,
+            value=st.session_state.get("slide_dbms", 75),
+            key="slide_dbms",
+            help="Relational modeling, SQL optimization, indexing, ACID transactions.",
+        )
+        m_se = st.slider(
+            "⚙️ 5. Software Engineering Principles",
+            min_value=0,
+            max_value=100,
+            value=st.session_state.get("slide_se", 80),
+            key="slide_se",
+            help="Design patterns, modular architecture, agile lifecycle, CI/CD.",
+        )
+
     with col_m2:
-        m_os = st.slider("4. OS & Computer Networks", 0, 100, st.session_state.get("preset_os", 72), key="slide_os")
-        m_se = st.slider("5. Software Engineering Principles", 0, 100, st.session_state.get("preset_se", 80), key="slide_se")
-        m_math = st.slider("6. Mathematics & Statistics", 0, 100, st.session_state.get("preset_math", 76), key="slide_math")
+        m_oop = st.slider(
+            "💻 2. Object-Oriented Programming",
+            min_value=0,
+            max_value=100,
+            value=st.session_state.get("slide_oop", 78),
+            key="slide_oop",
+            help="Encapsulation, inheritance, polymorphism, design SOLID principles.",
+        )
+        m_os = st.slider(
+            "🌐 4. Operating Systems & Networks",
+            min_value=0,
+            max_value=100,
+            value=st.session_state.get("slide_os", 72),
+            key="slide_os",
+            help="Process scheduling, memory paging, socket networking, TCP/IP protocols.",
+        )
+        m_math = st.slider(
+            "📐 6. Mathematics & Statistics",
+            min_value=0,
+            max_value=100,
+            value=st.session_state.get("slide_math", 76),
+            key="slide_math",
+            help="Discrete math, linear algebra, calculus, probability & inferential statistics.",
+        )
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Section 2: Specialized University Electives (INSTANT REACTIVITY)
+    # -------------------------------------------------------------------------
+    # Section 2: Specialized University Electives (Previous style)
+    # -------------------------------------------------------------------------
     st.markdown(
         """
         <div class="pf-card">
-            <div class="pf-card-title">🔮 02. Specialized University Electives</div>
-            <div class="pf-card-desc">Select any specialized elective modules you have taken or are currently enrolled in. Dynamic score sliders render instantly for all selected electives.</div>
+            <div class="pf-card-title">📚 Specialized University Electives</div>
+            <div class="pf-card-desc">Select your completed or current university elective courses and provide your performance score (0–100) for each.</div>
         """,
         unsafe_allow_html=True,
     )
@@ -2247,200 +2337,280 @@ with tab1:
         "Technical Writing",
     ]
 
-    default_elecs = st.session_state.get("preset_electives", ["AI & Machine Learning", "Cloud Computing"])
-
     selected_electives = st.multiselect(
-        "Selected Electives",
+        "Choose University Elective Modules",
         all_electives_catalog,
-        default=default_elecs,
-        help="Choose any number of electives relevant to your career path.",
+        default=st.session_state.get("selected_electives_input", ["AI & Machine Learning", "Cloud Computing"]),
         key="selected_electives_input",
+        help="Select elective modules you have completed or are currently taking.",
     )
 
     electives_dict = {}
     if selected_electives:
         st.markdown(
-            f"<p style='font-size: 0.875rem; font-weight: 700; color: #38BDF8; margin-top: 0.85rem; letter-spacing: 0.02em;'>"
-            f"Elective Proficiency & Grades (0 – 100) — <span style='color: #00F0FF;'>{len(selected_electives)} Active</span>:</p>",
+            f"<p style='font-size: 0.88rem; font-weight: 700; color: #38BDF8; margin-top: 0.95rem; margin-bottom: 0.5rem;'>Elective Module Performance Scores ({len(selected_electives)} Active):</p>",
             unsafe_allow_html=True,
         )
-        
-        num_cols = 2 if len(selected_electives) > 1 else 1
-        elec_cols = st.columns(num_cols)
+        e_cols = st.columns(2 if len(selected_electives) > 1 else 1)
         for i, elec_name in enumerate(selected_electives):
-            with elec_cols[i % num_cols]:
+            with e_cols[i % 2]:
                 slider_key = f"elec_{elec_name.replace(' ', '_').replace('&', 'and')}"
                 elec_score = st.slider(
-                    f"{elec_name}",
+                    f"📖 {elec_name}",
                     min_value=0,
                     max_value=100,
                     value=st.session_state.get(slider_key, 80),
                     key=slider_key,
+                    help=f"Your performance/mark in {elec_name} (0-100 scale).",
                 )
                 electives_dict[elec_name] = elec_score
     else:
-        st.caption("No electives currently selected. You can select electives from the dropdown above.")
+        st.info("💡 No elective courses selected. You can select electives above to refine your specialized career matching.")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Section 3: Technical Skills
+    # 5. Section: Hands-on Technical Proficiencies
     st.markdown(
         """
         <div class="pf-card">
-            <div class="pf-card-title">💻 03. Technical Hands-on Proficiencies</div>
-            <div class="pf-card-desc">Rate your hands-on technical proficiency (Level 1: Novice to Level 5: Expert).</div>
+            <div class="pf-card-title">💻 Hands-on Technical Proficiencies</div>
+            <div class="pf-card-desc">Rate your practical hands-on experience across major software engineering, data, and infrastructure toolchains.</div>
         """,
         unsafe_allow_html=True,
     )
 
+    lvl_map = {1: "Novice", 2: "Basic", 3: "Intermediate", 4: "Advanced", 5: "Expert"}
+
     tc1, tc2, tc3, tc4 = st.columns(4)
     with tc1:
-        t_python = st.select_slider("Python", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_py", 4), key="sl_py")
-        t_jcpp = st.select_slider("Java / C++", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_jcpp", 3), key="sl_jcpp")
+        st.markdown("🐍 **Python**")
+        t_python = st.select_slider("Python", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_py", 4), key="sl_py", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_python]}`")
+
+        st.markdown("☕ **Java / C++**")
+        t_jcpp = st.select_slider("Java / C++", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_jcpp", 3), key="sl_jcpp", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_jcpp]}`")
+
     with tc2:
-        t_sql = st.select_slider("SQL / RDBMS", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_sql", 4), key="sl_sql")
-        t_web = st.select_slider("Web Stack", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_web", 3), key="sl_web")
+        st.markdown("🗄️ **SQL / Databases**")
+        t_sql = st.select_slider("SQL", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_sql", 4), key="sl_sql", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_sql]}`")
+
+        st.markdown("🌐 **Web Stack (React/Node)**")
+        t_web = st.select_slider("Web", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_web", 3), key="sl_web", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_web]}`")
+
     with tc3:
-        t_cloud = st.select_slider("Cloud / Docker", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_cloud", 3), key="sl_cloud")
-        t_ml = st.select_slider("ML / AI Frameworks", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_ml", 4), key="sl_ml")
+        st.markdown("☁️ **Cloud / Docker**")
+        t_cloud = st.select_slider("Cloud", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_cloud", 3), key="sl_cloud", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_cloud]}`")
+
+        st.markdown("🧠 **ML / AI Frameworks**")
+        t_ml = st.select_slider("ML", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_ml", 4), key="sl_ml", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_ml]}`")
+
     with tc4:
-        t_mob = st.select_slider("Mobile Dev", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_mob", 2), key="sl_mob")
-        t_sec = st.select_slider("Cybersecurity", options=[1, 2, 3, 4, 5], value=st.session_state.get("preset_sec", 2), key="sl_sec")
+        st.markdown("📱 **Mobile Dev**")
+        t_mob = st.select_slider("Mobile", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_mob", 2), key="sl_mob", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_mob]}`")
+
+        st.markdown("🛡️ **Cybersecurity**")
+        t_sec = st.select_slider("Security", options=[1, 2, 3, 4, 5], value=st.session_state.get("sl_sec", 2), key="sl_sec", label_visibility="collapsed")
+        st.caption(f"Level: `{lvl_map[t_sec]}`")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Section 4: Categorized 4-Pillar Soft Skills & Work Strengths
+    # 6. Section: 4-Pillar Categorized Soft Skills & Work Strengths
     st.markdown(
         """
         <div class="pf-card">
-            <div class="pf-card-title">🧩 04. Soft Skills & Work Strengths</div>
-            <div class="pf-card-desc">Select the attributes that best describe your natural working style across the 4 core professional domains. Each career archetype evaluates prioritized soft-skill requirements.</div>
+            <div class="pf-card-title">🤝 Soft Skills & Work Strengths</div>
+            <div class="pf-card-desc">Select the attributes that best describe your natural work habits across the 4 professional pillars.</div>
         """,
         unsafe_allow_html=True,
     )
 
     col_people, col_ideas, col_data, col_execution = st.columns(4)
-
     selected_soft_skills = []
     default_checked_softs = {"Problem Solving & Logic", "Analytical & Critical Thinking", "Detail-Oriented & Precision"}
 
     with col_people:
-        st.markdown("<p style='font-size: 0.875rem; font-weight: 700; color: #38BDF8; margin-bottom: 0.5rem;'>👥 People & Leadership</p>", unsafe_allow_html=True)
-        people_skills = [
-            "Communicating & Articulating",
-            "Team Leadership & Delegation",
-            "Negotiation & Persuasion",
-            "Client Facing & Presentation",
-            "Mentoring & Teaching",
-            "Active Listening & Empathy",
-        ]
-        for skill in people_skills:
+        st.markdown("<p style='font-size: 0.88rem; font-weight: 700; color: #38BDF8; margin-bottom: 0.5rem;'>👥 People & Leadership</p>", unsafe_allow_html=True)
+        for skill in ALL_PEOPLE_SKILLS:
             chk_val = st.session_state.get(f"soft_{skill}", skill in default_checked_softs)
             if st.checkbox(skill, value=chk_val, key=f"soft_{skill}"):
                 selected_soft_skills.append(skill)
 
     with col_ideas:
-        st.markdown("<p style='font-size: 0.875rem; font-weight: 700; color: #C084FC; margin-bottom: 0.5rem;'>💡 Ideas & Innovation</p>", unsafe_allow_html=True)
-        ideas_skills = [
-            "Problem Solving & Logic",
-            "Creative & Visual Design",
-            "Research & Investigation",
-            "Storytelling & Conceptualizing",
-            "Innovation & Prototyping",
-            "Technical & Content Writing",
-        ]
-        for skill in ideas_skills:
+        st.markdown("<p style='font-size: 0.88rem; font-weight: 700; color: #C084FC; margin-bottom: 0.5rem;'>💡 Ideas & Innovation</p>", unsafe_allow_html=True)
+        for skill in ALL_IDEAS_SKILLS:
             chk_val = st.session_state.get(f"soft_{skill}", skill in default_checked_softs)
             if st.checkbox(skill, value=chk_val, key=f"soft_{skill}"):
                 selected_soft_skills.append(skill)
 
     with col_data:
-        st.markdown("<p style='font-size: 0.875rem; font-weight: 700; color: #34D399; margin-bottom: 0.5rem;'>📊 Data & Systems</p>", unsafe_allow_html=True)
-        data_skills = [
-            "Analytical & Critical Thinking",
-            "Detail-Oriented & Precision",
-            "Planning & Task Organizing",
-            "Time & Deadline Management",
-            "Quantitative & Mathematical",
-            "Monitoring & Evaluation",
-        ]
-        for skill in data_skills:
+        st.markdown("<p style='font-size: 0.88rem; font-weight: 700; color: #34D399; margin-bottom: 0.5rem;'>📊 Data & Systems</p>", unsafe_allow_html=True)
+        for skill in ALL_DATA_SKILLS:
             chk_val = st.session_state.get(f"soft_{skill}", skill in default_checked_softs)
             if st.checkbox(skill, value=chk_val, key=f"soft_{skill}"):
                 selected_soft_skills.append(skill)
 
     with col_execution:
-        st.markdown("<p style='font-size: 0.875rem; font-weight: 700; color: #FBBF24; margin-bottom: 0.5rem;'>🛠️ Execution & Practical</p>", unsafe_allow_html=True)
-        exec_skills = [
-            "Hardware & System Troubleshooting",
-            "Hands-on Prototyping",
-            "Debugging & Root-Cause Analysis",
-            "Working Under Pressure / Incidents",
-            "Process Optimization",
-            "Process & Protocol Adherence",
-        ]
-        for skill in exec_skills:
+        st.markdown("<p style='font-size: 0.88rem; font-weight: 700; color: #FBBF24; margin-bottom: 0.5rem;'>🛠️ Execution & Practical</p>", unsafe_allow_html=True)
+        for skill in ALL_EXEC_SKILLS:
             chk_val = st.session_state.get(f"soft_{skill}", skill in default_checked_softs)
             if st.checkbox(skill, value=chk_val, key=f"soft_{skill}"):
                 selected_soft_skills.append(skill)
 
     st.markdown(
-        f"<div style='margin-top: 0.75rem; font-size: 0.85rem; color: #94A3B8;'>"
-        f"Selected: <b style='color: #00F0FF;'>{len(selected_soft_skills)} soft skills</b> active."
+        f"<div style='margin-top: 0.75rem; font-size: 0.9rem; color: #94A3B8;'>"
+        f"Selected Attributes: <b style='color: #00E5FF;'>{len(selected_soft_skills)} active soft skills</b> across 4 pillars."
         f"</div>",
         unsafe_allow_html=True,
     )
-
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Section 5: Career Aspirations & Experience
+    # 7. Profile Snapshot Summary Gauge Cards
+    avg_core = (m_dsa + m_oop + m_dbms + m_os + m_se + m_math) / 6.0
+    avg_tech = ((t_python + t_jcpp + t_sql + t_web + t_cloud + t_ml + t_mob + t_sec) / 40.0) * 100.0
+
     st.markdown(
-        """
-        <div class="pf-card">
-            <div class="pf-card-title">🎯 05. Career Aspirations & Experience</div>
-            <div class="pf-card-desc">Specify your preferred work style, industry domains, and existing portfolio experience.</div>
+        "<p style='font-size: clamp(0.85rem, 0.95vw, 1.05rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin-bottom: 0.75rem;'>📊 YOUR PROFILE SNAPSHOT</p>",
+        unsafe_allow_html=True,
+    )
+    snap1, snap2, snap3, snap4 = st.columns(4)
+
+    with snap1:
+        st.markdown(
+            f"""
+            <div class="pf-snapshot-card">
+                <div class="pf-snapshot-title">
+                    <span>💻 Technical Skills</span>
+                    <span style="color: #00E5FF; font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem;">{int(avg_tech)}%</span>
+                </div>
+                <div class="pf-progress-track">
+                    <div class="pf-progress-fill" style="width: {int(avg_tech)}%; background: linear-gradient(90deg, #0284C7, #00E5FF);"></div>
+                </div>
+                <div style="font-size: 0.78rem; color: #94A3B8;">8 Hands-on Proficiencies</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with snap2:
+        st.markdown(
+            f"""
+            <div class="pf-snapshot-card">
+                <div class="pf-snapshot-title">
+                    <span>🎓 Academic Performance</span>
+                    <span style="color: #34D399; font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem;">{int(avg_core)}%</span>
+                </div>
+                <div class="pf-progress-track">
+                    <div class="pf-progress-fill" style="width: {int(avg_core)}%; background: linear-gradient(90deg, #059669, #34D399);"></div>
+                </div>
+                <div style="font-size: 0.78rem; color: #94A3B8;">GPA {in_gpa:.2f} • 6 Core Modules</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with snap3:
+        soft_pct = min(100, int((len(selected_soft_skills) / 6.0) * 100))
+        st.markdown(
+            f"""
+            <div class="pf-snapshot-card">
+                <div class="pf-snapshot-title">
+                    <span>🤝 Soft Skills</span>
+                    <span style="color: #C084FC; font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem;">{len(selected_soft_skills)} Active</span>
+                </div>
+                <div class="pf-progress-track">
+                    <div class="pf-progress-fill" style="width: {soft_pct}%; background: linear-gradient(90deg, #7C3AED, #C084FC);"></div>
+                </div>
+                <div style="font-size: 0.78rem; color: #94A3B8;">4 Pillars Configured</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with snap4:
+        proj_val = st.session_state.get("projects_input", 3)
+        st.markdown(
+            f"""
+            <div class="pf-snapshot-card">
+                <div class="pf-snapshot-title">
+                    <span>🚀 Projects / Experience</span>
+                    <span style="color: #FBBF24; font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem;">{proj_val} Projects</span>
+                </div>
+                <div class="pf-progress-track">
+                    <div class="pf-progress-fill" style="width: {min(100, proj_val * 20)}%; background: linear-gradient(90deg, #D97706, #FBBF24);"></div>
+                </div>
+                <div style="font-size: 0.78rem; color: #94A3B8;">Verified Portfolio Builds</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # 8. Section: Advanced Profile Information (Collapsible)
+    with st.expander("▸ Advanced Profile Preferences & Experience", expanded=False):
+        adv_col1, adv_col2 = st.columns(2)
+
+        with adv_col1:
+            style_list = ["Technical Specialist", "Consulting / Management", "R&D / Creative"]
+            def_style = st.session_state.get("work_style_input", "Technical Specialist")
+            in_work_style = st.radio(
+                "Work Style Preference",
+                style_list,
+                index=style_list.index(def_style) if def_style in style_list else 0,
+                horizontal=True,
+                key="work_style_input",
+            )
+            in_domains = st.multiselect(
+                "Desired Industry Domains",
+                [
+                    "Artificial Intelligence & ML",
+                    "Enterprise Cloud & DevOps",
+                    "Full-Stack Web Engineering",
+                    "Information Security & Defense",
+                    "Interactive Gaming & Graphics",
+                    "Digital Product Design (UX/UI)",
+                    "Fintech & Data Analytics",
+                    "Automated Manufacturing & Robotics",
+                ],
+                default=st.session_state.get("domains_input", ["Artificial Intelligence & ML", "Enterprise Cloud & DevOps"]),
+                key="domains_input",
+            )
+
+        with adv_col2:
+            in_internship = st.toggle("Completed University / Industry Internship", value=st.session_state.get("intern_toggle", True), key="intern_toggle")
+            in_projects = st.number_input("Completed Technical Projects", min_value=0, max_value=20, value=st.session_state.get("projects_input", 3), key="projects_input")
+            in_certs = st.text_input("Existing Certifications (comma separated)", value=st.session_state.get("certs_input", "AWS Cloud Practitioner"), key="certs_input")
+
+    # 9. Primary Call to Action Section
+    completeness = 20
+    if in_gpa > 0:
+        completeness += 15
+    if avg_core > 0:
+        completeness += 25
+    if avg_tech > 0:
+        completeness += 20
+    if len(selected_soft_skills) >= 2:
+        completeness += 10
+    if in_projects > 0:
+        completeness += 10
+    completeness = min(100, completeness)
+
+    st.markdown(
+        f"""
+        <div class="pf-cta-card">
+            <div class="pf-cta-title">✨ READY TO DISCOVER YOUR PATH?</div>
+            <div class="pf-cta-sub">Your profile is <b style="color: #00E5FF;">{completeness}% complete</b>. Our AI engines are ready to evaluate your optimal career trajectory.</div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
-    ca1, ca2 = st.columns(2)
-    with ca1:
-        style_list = ["Technical Specialist", "Consulting / Management", "R&D / Creative"]
-        def_style = st.session_state.get("preset_style", "Technical Specialist")
-        in_work_style = st.radio(
-            "Work Style Preference",
-            style_list,
-            index=style_list.index(def_style) if def_style in style_list else 0,
-            horizontal=True,
-            key="work_style_input",
-        )
-        in_domains = st.multiselect(
-            "Desired Industry Domains",
-            [
-                "Artificial Intelligence & ML",
-                "Enterprise Cloud & DevOps",
-                "Full-Stack Web Engineering",
-                "Information Security & Defense",
-                "Interactive Gaming & Graphics",
-                "Digital Product Design (UX/UI)",
-                "Fintech & Data Analytics",
-                "Automated Manufacturing & Robotics",
-            ],
-            default=["Artificial Intelligence & ML", "Enterprise Cloud & DevOps"],
-            key="domains_input",
-        )
+    btn_submit = st.button("🚀 Analyze My Career & Generate Roadmap", type="primary", use_container_width=True)
 
-    with ca2:
-        in_internship = st.toggle("Completed University / Industry Internship", value=False, key="intern_toggle")
-        in_projects = st.number_input("Completed Technical Projects", min_value=0, max_value=20, value=3, key="projects_input")
-        in_certs = st.text_input("Existing Certifications (comma separated)", placeholder="e.g. AWS Cloud Practitioner, CS50x", key="certs_input")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    btn_submit = st.button("⚡ Run Multi-Engine Inference & Generate Cyber Roadmap", type="primary", use_container_width=True)
-
-    # Process Assessment
     if btn_submit:
         core_mods = {
             "DSA": m_dsa,
@@ -2475,11 +2645,9 @@ with tab1:
             existing_certs=in_certs,
         )
 
-        # Run Multi-Engine Inference
         inference_results = run_hybrid_inference(profile)
         top_rec = inference_results[0]
 
-        # Calculate SHAP & Gaps
         shap_df = calculate_shap_proxy_deltas(profile, top_rec["career"])
         gaps = calculate_skill_gaps(profile, top_rec["career"])
         rec_certs = recommend_certifications(gaps, target_career=top_rec["career"], student_year=in_year)
@@ -2488,7 +2656,6 @@ with tab1:
         top_driver = shap_df[shap_df["Delta"] > 0].iloc[-1]["Feature"] if not shap_df[shap_df["Delta"] > 0].empty else "Academic Foundation"
         critical_gap = gaps[0]["skill_name"] if gaps else "None (Target Met)"
 
-        # Save to SQLite
         save_student_record(
             gpa=in_gpa,
             academic_year=in_year,
@@ -2500,7 +2667,6 @@ with tab1:
             critical_gap=critical_gap,
         )
 
-        # Store in Session State
         st.session_state["evaluation_data"] = {
             "profile": profile,
             "results": inference_results,
@@ -2511,15 +2677,36 @@ with tab1:
             "narrative": narrative,
         }
 
-        st.toast("⚡ Multi-Engine Evaluation complete! View your results in Tab 02 // Guidance & Roadmap.", icon="✅")
+        st.session_state["active_nav_tab"] = "② Career Roadmap"
+        st.toast("⚡ Multi-Engine Evaluation complete! Redirecting to Career Roadmap...", icon="🚀")
+        st.rerun()
+
+    # Bottom Navigation for Tab 1
+    st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 2rem 0 1.2rem 0;'>", unsafe_allow_html=True)
+    p_nav1, p_nav2, p_nav3 = st.columns([1, 1, 1.3])
+    with p_nav1:
+        if st.button("🔬 Explore Model Studio", key="p_bot_studio", use_container_width=True):
+            st.session_state["active_nav_tab"] = "③ Model Studio"
+            st.rerun()
+    with p_nav2:
+        if st.button("📋 View Evaluation History", key="p_bot_hist", use_container_width=True):
+            st.session_state["active_nav_tab"] = "④ History"
+            st.rerun()
+    with p_nav3:
+        if st.button("Next: View Career Roadmap →", key="p_bot_next", type="primary", use_container_width=True):
+            st.session_state["active_nav_tab"] = "② Career Roadmap"
+            st.rerun()
 
 
 # -----------------------------------------------------------------------------
-# TAB 2: GUIDANCE & ROADMAP (RESULTS SCREEN & ARCHETYPE BREAKDOWN)
+# TAB 2: ② CAREER ROADMAP (AI RECOMMENDATIONS & GUIDANCE)
 # -----------------------------------------------------------------------------
-with tab2:
+elif current_tab == "② Career Roadmap":
     if "evaluation_data" not in st.session_state:
-        st.info("⚡ No evaluation results available yet. Please complete and submit the **01 // Profile Intake** form to generate your personalized career roadmap.")
+        st.info("⚡ No evaluation results available yet. Please complete and submit the **① Profile** form to generate your personalized career roadmap.")
+        if st.button("← Go to Profile Intake Form", type="primary", key="roadmap_goto_prof"):
+            st.session_state["active_nav_tab"] = "① Profile"
+            st.rerun()
     else:
         eval_data = st.session_state["evaluation_data"]
         top_rec = eval_data["top_rec"]
@@ -2529,20 +2716,18 @@ with tab2:
         certs = eval_data["certs"]
         narrative = eval_data["narrative"]
 
-        # Active Model indicator badge
         active_dataset_name = st.session_state.get("active_dataset_name", "Standard University Benchmark Dataset")
         st.markdown(
-            f"<div style='margin-bottom: 1rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;'>"
+            f"<div style='margin-bottom: 1.2rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;'>"
             f"<span class='pf-badge pf-badge-slate'>Model Ground Truth: <b style='color: #F8FAFC;'>{active_dataset_name}</b></span>"
-            f"<span class='pf-badge pf-badge-blue'>Primary Archetype: <b style='color: #00F0FF;'>{top_rec.get('archetype', 'Engineering & Architecture')}</b></span>"
+            f"<span class='pf-badge pf-badge-blue'>Primary Archetype: <b style='color: #00E5FF;'>{top_rec.get('archetype', 'Engineering & Architecture')}</b></span>"
             f"</div>",
             unsafe_allow_html=True,
         )
 
-        # 1. Top 3 Career Metric Cards
-        st.markdown("<p style='font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin-bottom: 0.6rem;'>⚡ Top Neural Career Recommendations</p>", unsafe_allow_html=True)
+        # Top 3 Recommendations
+        st.markdown("<p style='font-size: clamp(0.85rem, 0.95vw, 1.05rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin-bottom: 0.75rem;'>🧭 Top AI Career Recommendations</p>", unsafe_allow_html=True)
         top3 = results[:3]
-
         col_top1, col_top2, col_top3 = st.columns(3)
 
         # Rank 1 Hero Card
@@ -2554,19 +2739,19 @@ with tab2:
                         <span class="pf-badge pf-badge-blue">Primary Match • Rank 1</span>
                         <span class="pf-badge pf-badge-purple">{top3[0].get('archetype', 'Archetype')}</span>
                     </div>
-                    <h3 style="font-size: 1.35rem; font-weight: 700; margin: 0.6rem 0 0.3rem 0; color: #F8FAFC;">
+                    <h3 style="font-size: clamp(1.2rem, 1.5vw, 1.6rem); font-weight: 700; margin: 0.75rem 0 0.35rem 0; color: #F8FAFC;">
                         {top3[0]['icon']} {top3[0]['title']}
                     </h3>
-                    <div style="font-size: 2.3rem; font-weight: 800; color: #00F0FF; letter-spacing: -0.03em; text-shadow: 0 0 15px rgba(0, 240, 255, 0.45);">
+                    <div style="font-size: clamp(2rem, 2.8vw, 3.4rem); font-weight: 800; color: #00E5FF; letter-spacing: -0.03em; text-shadow: 0 0 15px rgba(0, 229, 255, 0.45);">
                         {top3[0]['match_pct']}%
                     </div>
-                    <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 0.35rem;">
+                    <div style="font-size: clamp(0.82rem, 0.9vw, 1rem); color: #94A3B8; margin-top: 0.35rem;">
                         Confidence: <b style="color: {top3[0]['conf_color']};">{top3[0]['confidence']}</b>
                     </div>
-                    <div style="font-size: 0.825rem; color: #CBD5E1; margin-top: 0.55rem; line-height: 1.45;">
+                    <div style="font-size: clamp(0.85rem, 0.92vw, 1.02rem); color: #CBD5E1; margin-top: 0.65rem; line-height: 1.5;">
                         {top3[0]['description']}
                     </div>
-                    <div class="pf-archetype-box">
+                    <div style="background: rgba(14, 23, 44, 0.65); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 0.85rem 1.1rem; margin-top: 0.95rem; font-size: clamp(0.82rem, 0.9vw, 0.98rem); color: #CBD5E1;">
                         <b style="color: #38BDF8;">Role Dynamic:</b> {top3[0].get('role_dynamic', '')}
                     </div>
                 </div>
@@ -2583,19 +2768,19 @@ with tab2:
                         <span class="pf-badge pf-badge-purple">Alternative Path • Rank 2</span>
                         <span class="pf-badge pf-badge-slate">{top3[1].get('archetype', 'Archetype')}</span>
                     </div>
-                    <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0.6rem 0 0.3rem 0; color: #F8FAFC;">
+                    <h3 style="font-size: clamp(1.1rem, 1.3vw, 1.45rem); font-weight: 700; margin: 0.75rem 0 0.35rem 0; color: #F8FAFC;">
                         {top3[1]['icon']} {top3[1]['title']}
                     </h3>
-                    <div style="font-size: 1.9rem; font-weight: 800; color: #C084FC; letter-spacing: -0.03em; text-shadow: 0 0 15px rgba(192, 132, 252, 0.35);">
+                    <div style="font-size: clamp(1.8rem, 2.3vw, 2.8rem); font-weight: 800; color: #C084FC; letter-spacing: -0.03em; text-shadow: 0 0 15px rgba(192, 132, 252, 0.35);">
                         {top3[1]['match_pct']}%
                     </div>
-                    <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 0.35rem;">
+                    <div style="font-size: clamp(0.82rem, 0.9vw, 1rem); color: #94A3B8; margin-top: 0.35rem;">
                         Confidence: <b style="color: {top3[1]['conf_color']};">{top3[1]['confidence']}</b>
                     </div>
-                    <div style="font-size: 0.825rem; color: #CBD5E1; margin-top: 0.55rem; line-height: 1.45;">
+                    <div style="font-size: clamp(0.85rem, 0.92vw, 1.02rem); color: #CBD5E1; margin-top: 0.65rem; line-height: 1.5;">
                         {top3[1]['description']}
                     </div>
-                    <div class="pf-archetype-box">
+                    <div style="background: rgba(14, 23, 44, 0.65); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 0.85rem 1.1rem; margin-top: 0.95rem; font-size: clamp(0.82rem, 0.9vw, 0.98rem); color: #CBD5E1;">
                         <b style="color: #C084FC;">Role Dynamic:</b> {top3[1].get('role_dynamic', '')}
                     </div>
                 </div>
@@ -2612,19 +2797,19 @@ with tab2:
                         <span class="pf-badge pf-badge-med">Emerging Fit • Rank 3</span>
                         <span class="pf-badge pf-badge-slate">{top3[2].get('archetype', 'Archetype')}</span>
                     </div>
-                    <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0.6rem 0 0.3rem 0; color: #F8FAFC;">
+                    <h3 style="font-size: clamp(1.1rem, 1.3vw, 1.45rem); font-weight: 700; margin: 0.75rem 0 0.35rem 0; color: #F8FAFC;">
                         {top3[2]['icon']} {top3[2]['title']}
                     </h3>
-                    <div style="font-size: 1.9rem; font-weight: 800; color: #FBBF24; letter-spacing: -0.03em; text-shadow: 0 0 15px rgba(251, 191, 36, 0.35);">
+                    <div style="font-size: clamp(1.8rem, 2.3vw, 2.8rem); font-weight: 800; color: #FBBF24; letter-spacing: -0.03em; text-shadow: 0 0 15px rgba(251, 191, 36, 0.35);">
                         {top3[2]['match_pct']}%
                     </div>
-                    <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 0.35rem;">
+                    <div style="font-size: clamp(0.82rem, 0.9vw, 1rem); color: #94A3B8; margin-top: 0.35rem;">
                         Confidence: <b style="color: {top3[2]['conf_color']};">{top3[2]['confidence']}</b>
                     </div>
-                    <div style="font-size: 0.825rem; color: #CBD5E1; margin-top: 0.55rem; line-height: 1.45;">
+                    <div style="font-size: clamp(0.85rem, 0.92vw, 1.02rem); color: #CBD5E1; margin-top: 0.65rem; line-height: 1.5;">
                         {top3[2]['description']}
                     </div>
-                    <div class="pf-archetype-box">
+                    <div style="background: rgba(14, 23, 44, 0.65); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 0.85rem 1.1rem; margin-top: 0.95rem; font-size: clamp(0.82rem, 0.9vw, 0.98rem); color: #FBBF24;">
                         <b style="color: #FBBF24;">Role Dynamic:</b> {top3[2].get('role_dynamic', '')}
                     </div>
                 </div>
@@ -2636,7 +2821,7 @@ with tab2:
         st.markdown(
             f"""
             <div class="pf-callout">
-                <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #00F0FF; margin-bottom: 0.35rem; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #00E5FF; margin-bottom: 0.45rem; font-size: 0.88rem; letter-spacing: 0.05em; text-transform: uppercase;">
                     ⚡ AI Advisory Executive Summary
                 </div>
                 {narrative}
@@ -2647,16 +2832,19 @@ with tab2:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 2. Visualizations Grid (Career Universe Ranking, XAI Divergent Chart, and Radar Competency Map)
-        st.markdown("<p style='font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin-bottom: 0.6rem;'>📊 Quantum Visual Analytics</p>", unsafe_allow_html=True)
+        # Visual Analytics
+        st.markdown(
+            "<p style='font-size: clamp(0.85rem, 0.95vw, 1.05rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin-bottom: 0.75rem;'>📊 Alignment Analytics & Competency Profiling</p>",
+            unsafe_allow_html=True,
+        )
         v_tab1, v_tab2 = st.tabs(["⚡ Alignment & Explainability (SHAP)", "🕸️ Competency Benchmark Radar"])
 
         with v_tab1:
-            col_v1, col_v2 = st.columns([1, 1])
+            col_v1, col_v2 = st.columns(2)
 
             with col_v1:
                 st.markdown("<div class='pf-card-title'>⚡ Career Alignment Distribution</div>", unsafe_allow_html=True)
-                st.markdown("<div class='pf-card-desc'>Comparative multi-engine match percentages across all evaluated paths.</div>", unsafe_allow_html=True)
+                st.markdown("<div class='pf-card-desc'>Multi-engine match percentages across all evaluated careers.</div>", unsafe_allow_html=True)
 
                 plot_df = pd.DataFrame(results).sort_values(by="final_score", ascending=True)
 
@@ -2667,12 +2855,12 @@ with tab2:
                         y=plot_df["title"],
                         orientation="h",
                         marker=dict(
-                            color=plot_df["match_pct"].apply(lambda v: "#00F0FF" if v == max(plot_df["match_pct"]) else "#334155"),
+                            color=plot_df["match_pct"].apply(lambda v: "#00E5FF" if v == max(plot_df["match_pct"]) else "#334155"),
                             line=dict(color="#38BDF8", width=plot_df["match_pct"].apply(lambda v: 1.5 if v == max(plot_df["match_pct"]) else 0)),
                         ),
                         text=plot_df["match_pct"].apply(lambda x: f"{x:.1f}%"),
                         textposition="outside",
-                        textfont=dict(size=11, family="Inter", color="#F8FAFC"),
+                        textfont=dict(size=12, family="Inter", color="#F8FAFC"),
                     )
                 )
 
@@ -2680,15 +2868,15 @@ with tab2:
                     xaxis=dict(range=[0, 115], showgrid=False, showticklabels=False, zeroline=False),
                     yaxis=dict(showgrid=False, tickfont=dict(size=12, family="Inter", color="#E2E8F0")),
                     margin=dict(l=10, r=20, t=10, b=10),
-                    height=320,
+                    height=340,
                     paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(15, 23, 42, 0.5)",
+                    plot_bgcolor="rgba(14, 23, 44, 0.5)",
                 )
                 st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
 
             with col_v2:
-                st.markdown("<div class='pf-card-title'>🔮 Explainability: Feature Contributions (SHAP)</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='pf-card-desc'>Factors driving (+) or penalizing (-) the primary match (<b style='color: #00F0FF;'>{top_rec['title']}</b>).</div>", unsafe_allow_html=True)
+                st.markdown("<div class='pf-card-title'>🔮 Feature Attribution Deltas (SHAP)</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='pf-card-desc'>Factors driving (+) or penalizing (-) the top match (<b style='color: #00E5FF;'>{top_rec['title']}</b>).</div>", unsafe_allow_html=True)
 
                 fig_shap = go.Figure()
                 fig_shap.add_trace(
@@ -2699,7 +2887,7 @@ with tab2:
                         marker=dict(color=shap_df["Color"], line=dict(width=0)),
                         text=shap_df["Delta"].apply(lambda d: f"+{d:.1f}%" if d > 0 else f"{d:.1f}%"),
                         textposition="outside",
-                        textfont=dict(size=11, family="Inter", color="#F8FAFC"),
+                        textfont=dict(size=12, family="Inter", color="#F8FAFC"),
                     )
                 )
 
@@ -2710,15 +2898,15 @@ with tab2:
                     xaxis=dict(range=[min_val, max_val], showgrid=True, gridcolor="rgba(51, 65, 85, 0.4)", zeroline=True, zerolinecolor="#64748B"),
                     yaxis=dict(showgrid=False, tickfont=dict(size=12, family="Inter", color="#E2E8F0")),
                     margin=dict(l=10, r=20, t=10, b=10),
-                    height=320,
+                    height=340,
                     paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(15, 23, 42, 0.5)",
+                    plot_bgcolor="rgba(14, 23, 44, 0.5)",
                 )
                 st.plotly_chart(fig_shap, use_container_width=True, config={"displayModeBar": False})
 
         with v_tab2:
             st.markdown(f"<div class='pf-card-title'>🕸️ Competency Benchmark Radar: Student vs. {top_rec['title']}</div>", unsafe_allow_html=True)
-            st.markdown("<div class='pf-card-desc'>Normalized multi-skill comparison across Core Module and Technical Proficiency dimensions (0–100 scale).</div>", unsafe_allow_html=True)
+            st.markdown("<div class='pf-card-desc'>Multi-dimensional comparison across Core Module and Technical Proficiency dimensions (0–100 scale).</div>", unsafe_allow_html=True)
 
             benchmarks = CAREER_UNIVERSE[top_rec["career"]]["benchmark_skills"]
             unified = eval_data["profile"].get_unified_skill_dict()
@@ -2755,8 +2943,8 @@ with tab2:
                 theta=radar_labels,
                 fill='toself',
                 name='Student Competency',
-                line=dict(color='#00F0FF', width=2.5),
-                fillcolor='rgba(0, 240, 255, 0.25)'
+                line=dict(color='#00E5FF', width=2.5),
+                fillcolor='rgba(0, 229, 255, 0.25)'
             ))
             fig_radar.add_trace(go.Scatterpolar(
                 r=target_norm,
@@ -2768,18 +2956,18 @@ with tab2:
             ))
             fig_radar.update_layout(
                 polar=dict(
-                    radialaxis=dict(visible=True, range=[0, 100], showticklabels=True, tickfont=dict(size=9, color="#94A3B8"), gridcolor="rgba(51, 65, 85, 0.5)"),
-                    angularaxis=dict(tickfont=dict(size=11, family="Inter", color="#E2E8F0"), gridcolor="rgba(51, 65, 85, 0.5)")
+                    radialaxis=dict(visible=True, range=[0, 100], showticklabels=True, tickfont=dict(size=10, color="#94A3B8"), gridcolor="rgba(51, 65, 85, 0.5)"),
+                    angularaxis=dict(tickfont=dict(size=12, family="Inter", color="#E2E8F0"), gridcolor="rgba(51, 65, 85, 0.5)")
                 ),
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(15, 23, 42, 0.5)",
+                plot_bgcolor="rgba(14, 23, 44, 0.5)",
                 legend=dict(font=dict(color="#CBD5E1", family="Inter"), orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
                 margin=dict(l=40, r=40, t=20, b=40),
-                height=380,
+                height=400,
             )
             st.plotly_chart(fig_radar, use_container_width=True, config={"displayModeBar": False})
 
-        # Soft Skill Archetype Matching Breakdown Box
+        # Soft Skill Archetype Match Breakdown
         matched_s = top_rec.get("matched_soft_skills", [])
         missing_s = top_rec.get("missing_soft_skills", [])
 
@@ -2787,7 +2975,7 @@ with tab2:
             f"""
             <div class="pf-card">
                 <div class="pf-card-title">🧩 Soft Skill Archetype Match Breakdown ({top_rec.get('archetype', '')})</div>
-                <div style="margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.55rem;">
                     {''.join([f"<span class='pf-badge pf-badge-blue'>✓ {s}</span>" for s in matched_s])}
                     {''.join([f"<span class='pf-badge pf-badge-high'>⚠ Missing: {s}</span>" for s in missing_s])}
                 </div>
@@ -2796,30 +2984,29 @@ with tab2:
             unsafe_allow_html=True,
         )
 
-        # Symbolic Rule Trace Accordion
         with st.expander("🔍 View Transparent Rule-Based Firing Trace"):
             st.markdown(f"**Rules evaluated and triggered for {top_rec['title']}:**")
             for r in top_rec["rules_fired"]:
                 st.markdown(f"- `{r}`")
-            st.caption("Engine Weights: 30% Rule Logic + 30% Mamdani Fuzzy System + 40% Random Forest Probability.")
+            st.caption("Score Fusion: 30% Rule Logic + 30% Mamdani Fuzzy System + 40% Random Forest Probability.")
 
-        st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 1.5rem 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 1.8rem 0;'>", unsafe_allow_html=True)
 
-        # 3. Two-Column Split: Skill Gap Audit & Cosine-Matched Certifications
+        # Two-Column Split: Skill Gap Audit & Recommended Certifications
         col_gap, col_cert = st.columns(2)
 
         with col_gap:
             st.markdown("<div class='pf-card-title'>🎯 Competency & Skill Gap Analysis</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='pf-card-desc'>Identified technical & soft competency requirements for <b style='color: #00F0FF;'>{top_rec['title']}</b>.</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='pf-card-desc'>Identified technical & soft competency requirements for <b style='color: #00E5FF;'>{top_rec['title']}</b>.</div>", unsafe_allow_html=True)
 
             if gaps:
                 for g in gaps:
                     st.markdown(
                         f"""
-                        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="background: rgba(14, 23, 44, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 0.95rem 1.2rem; margin-bottom: 0.7rem; display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div style="font-size: 0.9rem; font-weight: 600; color: #F8FAFC;">{g['skill_name']}</div>
-                                <div style="font-size: 0.775rem; color: #94A3B8; margin-top: 0.15rem;">
+                                <div style="font-size: clamp(0.9rem, 1vw, 1.1rem); font-weight: 600; color: #F8FAFC;">{g['skill_name']}</div>
+                                <div style="font-size: clamp(0.78rem, 0.85vw, 0.92rem); color: #94A3B8; margin-top: 0.2rem;">
                                     Current: <b style="color: #CBD5E1;">{g['current']}</b> • Target Requisite: <b style="color: #38BDF8;">{g['target']}</b>
                                 </div>
                             </div>
@@ -2832,7 +3019,7 @@ with tab2:
                 st.success("⚡ Outstanding! No significant skill gaps detected against the target career benchmark.")
 
         with col_cert:
-            st.markdown("<div class='pf-card-title'>📜 Recommended Industry Certifications</div>", unsafe_allow_html=True)
+            st.markdown("<div class='pf-card-title'>🏆 Recommended Industry Certifications</div>", unsafe_allow_html=True)
             st.markdown("<div class='pf-card-desc'>Matched using Gap-Weighted Cosine Similarity against identified deficiency requirements.</div>", unsafe_allow_html=True)
 
             for cert in certs:
@@ -2846,36 +3033,46 @@ with tab2:
 
                     st.write(cert['description'])
 
-                    # Display skill tags
-                    tag_html = " ".join([f"<span style='background:#1E293B; color:#38BDF8; padding:3px 8px; border-radius:4px; font-size:12px; margin-right:5px; margin-bottom:5px; display:inline-block; border:1px solid rgba(56, 189, 248, 0.25);'>{s}</span>" for s in cert['skills']])
+                    tag_html = " ".join([f"<span style='background:#1E293B; color:#38BDF8; padding:4px 10px; border-radius:6px; font-size:12px; margin-right:6px; margin-bottom:6px; display:inline-block; border:1px solid rgba(56, 189, 248, 0.25);'>{s}</span>" for s in cert['skills']])
                     st.markdown(tag_html, unsafe_allow_html=True)
 
-                    st.markdown("")  # Spacing
-                    
-                    # Action Buttons
                     btn_col1, btn_col2 = st.columns(2)
                     with btn_col1:
                         st.link_button("🌐 Official Exam & Syllabus", cert['official_url'], use_container_width=True)
                     with btn_col2:
                         st.link_button("🎓 Prepare on Course Platform", cert['prep_url'], use_container_width=True)
 
+        # Bottom Navigation for Tab 2
+        st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 2rem 0 1.2rem 0;'>", unsafe_allow_html=True)
+        r_nav1, r_nav2, r_nav3 = st.columns([1, 1, 1])
+        with r_nav1:
+            if st.button("← Back to Profile Intake", key="r_bot_back", use_container_width=True):
+                st.session_state["active_nav_tab"] = "① Profile"
+                st.rerun()
+        with r_nav2:
+            if st.button("🔬 Dataset & Model Studio →", key="r_bot_studio", use_container_width=True):
+                st.session_state["active_nav_tab"] = "③ Model Studio"
+                st.rerun()
+        with r_nav3:
+            if st.button("📋 View Evaluation History →", key="r_bot_hist", type="primary", use_container_width=True):
+                st.session_state["active_nav_tab"] = "④ History"
+                st.rerun()
+
 
 # -----------------------------------------------------------------------------
-# TAB 3: DATASET & MODEL STUDIO (INPUT, UPLOAD, EXPLORE, TRAIN, PREDICT)
+# TAB 3: ③ MODEL STUDIO (DATASET INSPECTION & MODEL TRAINING)
 # -----------------------------------------------------------------------------
-with tab3:
+elif current_tab == "③ Model Studio":
     st.markdown(
         """
         <div class="pf-card">
-            <div class="pf-card-title">🔬 03. Dataset & Model Studio</div>
-            <div class="pf-card-desc">Input, upload, inspect, and train the Machine Learning Classifier on custom or benchmark student cohorts.</div>
+            <div class="pf-card-title">🔬 Dataset & Model Studio</div>
+            <div class="pf-card-desc">Inspect training datasets, upload custom student cohorts, and retrain the multi-class Machine Learning classifier.</div>
         """,
         unsafe_allow_html=True,
     )
 
-    # Dataset Source Selector
-    d_col1, d_col2 = st.columns([1, 1])
-
+    d_col1, d_col2 = st.columns(2)
     with d_col1:
         st.markdown("##### 📁 1. Select / Input Training Dataset")
         dataset_source = st.radio(
@@ -2898,7 +3095,6 @@ with tab3:
             use_container_width=True,
         )
 
-    # Active DataFrame Resolution
     if dataset_source == "Upload Custom Dataset (CSV / Excel)":
         uploaded_file = st.file_uploader("Upload Student Dataset File (.csv or .xlsx)", type=["csv", "xlsx"])
         if uploaded_file is not None:
@@ -2917,7 +3113,7 @@ with tab3:
         elif "uploaded_df" in st.session_state:
             active_df = st.session_state["uploaded_df"]
         else:
-            st.info("⚡ No custom file uploaded yet. Please upload a CSV/Excel file or switch to the Standard Benchmark Dataset above.")
+            st.info("⚡ No custom file uploaded yet. Using Standard Benchmark Dataset.")
             active_df = generate_benchmark_dataset(samples_per_class=45)
             st.session_state["active_dataset_name"] = "Standard University Benchmark Dataset"
     else:
@@ -2940,14 +3136,11 @@ with tab3:
     with m4:
         st.metric("Feature Columns", len(active_df.columns))
 
-    # Interactive Table Explorer
     with st.expander("🔍 Explore Full Active Dataset Table", expanded=True):
         st.dataframe(active_df, use_container_width=True, height=260)
 
-    # Visual Distribution Chart
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Visual Distribution Charts
     c_v1, c_v2 = st.columns(2)
-
     with c_v1:
         st.markdown("##### Career Class Balance")
         if target_col in active_df.columns:
@@ -2959,13 +3152,13 @@ with tab3:
                 y="Career",
                 orientation="h",
                 color="Count",
-                color_continuous_scale=[[0, "#0C4A6E"], [1, "#00F0FF"]],
+                color_continuous_scale=[[0, "#0C4A6E"], [1, "#00E5FF"]],
             )
             fig_class.update_layout(
                 height=280,
                 margin=dict(l=10, r=10, t=10, b=10),
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(15, 23, 42, 0.5)",
+                plot_bgcolor="rgba(14, 23, 44, 0.5)",
                 coloraxis_showscale=False,
                 xaxis=dict(tickfont=dict(color="#CBD5E1")),
                 yaxis=dict(tickfont=dict(color="#CBD5E1")),
@@ -2979,19 +3172,19 @@ with tab3:
                 active_df,
                 x="GPA",
                 nbins=20,
-                color_discrete_sequence=["#00F0FF"],
+                color_discrete_sequence=["#00E5FF"],
             )
             fig_gpa.update_layout(
                 height=280,
                 margin=dict(l=10, r=10, t=10, b=10),
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(15, 23, 42, 0.5)",
+                plot_bgcolor="rgba(14, 23, 44, 0.5)",
                 xaxis=dict(tickfont=dict(color="#CBD5E1"), gridcolor="rgba(51, 65, 85, 0.4)"),
                 yaxis=dict(tickfont=dict(color="#CBD5E1"), gridcolor="rgba(51, 65, 85, 0.4)"),
             )
             st.plotly_chart(fig_gpa, use_container_width=True)
 
-    st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 1.5rem 0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 1.8rem 0;'>", unsafe_allow_html=True)
 
     # Model Training Section
     st.markdown(
@@ -3025,7 +3218,6 @@ with tab3:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Display Training Metrics if available
     if "train_metrics" in st.session_state:
         metrics = st.session_state["train_metrics"]
         st.markdown("##### 📈 Model Performance & Feature Importances")
@@ -3037,9 +3229,6 @@ with tab3:
         with pm3:
             st.metric("Training Samples", f"{metrics['train_samples']} train / {metrics['test_samples']} test")
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Feature Importance Chart
         feat_df = metrics["feat_imp_df"]
         fig_feat = px.bar(
             feat_df,
@@ -3048,13 +3237,13 @@ with tab3:
             orientation="h",
             title="Global Feature Importances (Random Forest Gini Impurity)",
             color="Importance",
-            color_continuous_scale=[[0, "#0C4A6E"], [1, "#00F0FF"]],
+            color_continuous_scale=[[0, "#0C4A6E"], [1, "#00E5FF"]],
         )
         fig_feat.update_layout(
             height=400,
             margin=dict(l=10, r=10, t=30, b=10),
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(15, 23, 42, 0.5)",
+            plot_bgcolor="rgba(14, 23, 44, 0.5)",
             coloraxis_showscale=False,
             title_font=dict(color="#F8FAFC", family="Space Grotesk"),
             xaxis=dict(tickfont=dict(color="#CBD5E1"), gridcolor="rgba(51, 65, 85, 0.4)"),
@@ -3062,14 +3251,30 @@ with tab3:
         )
         st.plotly_chart(fig_feat, use_container_width=True)
 
+    # Bottom Navigation for Tab 3
+    st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 2rem 0 1.2rem 0;'>", unsafe_allow_html=True)
+    s_nav1, s_nav2, s_nav3 = st.columns([1, 1, 1])
+    with s_nav1:
+        if st.button("← Back to Career Roadmap", key="s_bot_back", use_container_width=True):
+            st.session_state["active_nav_tab"] = "② Career Roadmap"
+            st.rerun()
+    with s_nav2:
+        if st.button("👤 Edit Student Profile", key="s_bot_prof", use_container_width=True):
+            st.session_state["active_nav_tab"] = "① Profile"
+            st.rerun()
+    with s_nav3:
+        if st.button("📋 View Evaluation History →", key="s_bot_next", type="primary", use_container_width=True):
+            st.session_state["active_nav_tab"] = "④ History"
+            st.rerun()
+
 
 # -----------------------------------------------------------------------------
-# TAB 4: HISTORY LOG & ADVISOR VIEW
+# TAB 4: ④ HISTORY (AUDIT TRAIL & LOG STORAGE)
 # -----------------------------------------------------------------------------
-with tab4:
+elif current_tab == "④ History":
     st.markdown(
         """
-        <div class="pf-card-title">📋 04. Academic Advisor & Evaluation History</div>
+        <div class="pf-card-title">📋 Academic Advisor & Evaluation History</div>
         <div class="pf-card-desc">Structured audit log of student profile assessments persisted in local SQLite storage.</div>
         """,
         unsafe_allow_html=True,
@@ -3078,7 +3283,7 @@ with tab4:
     records_df = fetch_all_records()
 
     if records_df.empty:
-        st.info("⚡ No historical student records found in `career_records.db`. Submitting profiles in **01 // Profile Intake** will automatically populate this database.")
+        st.info("⚡ No historical student records found in `career_records.db`. Submitting profiles in **① Profile** will automatically populate this database.")
     else:
         total_evals = len(records_df)
         avg_gpa = records_df["GPA"].mean()
@@ -3093,12 +3298,7 @@ with tab4:
             st.metric("Most Frequent Recommendation", f"{popular_role}")
 
         st.markdown("<br>", unsafe_allow_html=True)
-
-        st.dataframe(
-            records_df,
-            use_container_width=True,
-            hide_index=True,
-        )
+        st.dataframe(records_df, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         col_act1, col_act2 = st.columns([1, 4])
@@ -3115,3 +3315,21 @@ with tab4:
             if st.button("🗑️ Clear History Database", help="Deletes all recorded logs from SQLite."):
                 clear_all_records()
                 st.rerun()
+
+    # Bottom Navigation for Tab 4
+    st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 2rem 0 1.2rem 0;'>", unsafe_allow_html=True)
+    h_nav1, h_nav2, h_nav3 = st.columns([1, 1, 1.2])
+    with h_nav1:
+        if st.button("← Back to Career Roadmap", key="h_bot_back", use_container_width=True):
+            st.session_state["active_nav_tab"] = "② Career Roadmap"
+            st.rerun()
+    with h_nav2:
+        if st.button("🔬 Open Model Studio", key="h_bot_studio", use_container_width=True):
+            st.session_state["active_nav_tab"] = "③ Model Studio"
+            st.rerun()
+    with h_nav3:
+        if st.button("🚀 Start New Profile Intake →", key="h_bot_new", type="primary", use_container_width=True):
+            st.session_state["active_nav_tab"] = "① Profile"
+            st.rerun()
+
+
