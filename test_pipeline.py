@@ -17,6 +17,11 @@ if sys.platform == "win32":
 # Add directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Point the app at a throwaway database before import (importing app runs init_database()),
+# so test runs never touch or migrate the real career_records.db
+TEST_DB_DIR = tempfile.TemporaryDirectory()
+os.environ["CAREER_DB_FILE"] = os.path.join(TEST_DB_DIR.name, "import_records.db")
+
 import app
 from app import (
     StudentProfile,
@@ -38,11 +43,15 @@ from app import (
     init_database,
     save_student_record,
     fetch_all_records,
+    fetch_student_history,
+    compare_assessments,
+    profile_to_dict,
+    parse_held_certifications,
 )
 
 
 def run_tests():
-    print("✦ [1/9] Testing Knowledge Base & Universe integrity...")
+    print("✦ [1/10] Testing Knowledge Base & Universe integrity...")
     assert len(CAREER_UNIVERSE) == 9, f"Expected 9 careers, got {len(CAREER_UNIVERSE)}"
     assert len(CERTIFICATION_CATALOG) >= 8, f"Expected >=8 certs, got {len(CERTIFICATION_CATALOG)}"
     for cname, cinfo in CAREER_UNIVERSE.items():
@@ -53,7 +62,7 @@ def run_tests():
     assert set(RULE_BASE["career_rules"]) == set(CAREER_UNIVERSE), "rules.json must define rules for every career"
     print("  ✓ Knowledge Base integrity & 5-Archetype mappings passed.")
 
-    print("✦ [2/9] Creating test student profile with 4-pillar soft skills...")
+    print("✦ [2/10] Creating test student profile with 4-pillar soft skills...")
     profile = StudentProfile(
         gpa=3.75,
         year="3rd Year",
@@ -91,7 +100,7 @@ def run_tests():
     )
     print("  ✓ Profile object created successfully with 4-pillar soft skills.")
 
-    print("✦ [3/9] Testing Rule-Based Engine & Soft Skill Bonus Trace...")
+    print("✦ [3/10] Testing Rule-Based Engine & Soft Skill Bonus Trace...")
     rule_score, rules_fired = evaluate_rule_engine(profile, "AI Engineer")
     assert 0.0 <= rule_score <= 1.0, f"Invalid rule score: {rule_score}"
     assert len(rules_fired) > 0, "Expected rules to fire for AI Engineer"
@@ -99,7 +108,7 @@ def run_tests():
     assert soft_rule_fired, "Expected soft skills rule R-SOFT-SKILLS to fire"
     print(f"  ✓ Rule score: {rule_score:.2f}, Rules fired count: {len(rules_fired)}")
 
-    print("✦ [4/9] Testing Fuzzy Logic Mamdani Suitability Engine with Soft Skill Clusters...")
+    print("✦ [4/10] Testing Fuzzy Logic Mamdani Suitability Engine with Soft Skill Clusters...")
     fuzzy_score = evaluate_fuzzy_suitability(profile, "AI Engineer")
     assert 0.0 <= fuzzy_score <= 1.0, f"Invalid fuzzy score: {fuzzy_score}"
     perfect = StudentProfile(4.0, profile.year, profile.core_modules, profile.electives, profile.tech_skills,
@@ -107,7 +116,7 @@ def run_tests():
     assert evaluate_fuzzy_suitability(perfect, "AI Engineer") >= fuzzy_score, "A perfect GPA/soft-skill match must not score lower"
     print(f"  ✓ Fuzzy suitability score: {fuzzy_score:.2f}")
 
-    print("✦ [5/9] Testing ML Classifier & Hybrid Multi-Engine Fusion...")
+    print("✦ [5/10] Testing ML Classifier & Hybrid Multi-Engine Fusion...")
     ml_probs = evaluate_ml_model(profile)
     assert len(ml_probs) == 9, f"Expected 9 probabilities, got {len(ml_probs)}"
 
@@ -116,7 +125,7 @@ def run_tests():
     top_career = results[0]
     print(f"  ✓ Top recommendation: {top_career['title']} ({top_career['match_pct']}%) [{top_career['archetype']}] with {top_career['confidence']}")
 
-    print("✦ [6/9] Testing SHAP XAI, Skill Gap & Cosine Certification Matching...")
+    print("✦ [6/10] Testing SHAP XAI, Skill Gap & Cosine Certification Matching...")
     shap_df = calculate_shap_contributions(profile, top_career["career"])
     assert not shap_df.empty, "SHAP dataframe should not be empty"
     assert shap_df.attrs["method"] == "shap", "Expected real SHAP TreeExplainer values, got the proxy fallback"
@@ -132,7 +141,7 @@ def run_tests():
     print(f"  ✓ XAI deltas: {len(shap_df)}, Skill gaps: {len(gaps)}, Recommended certs: {len(certs)}")
     print(f"  ✓ Narrative preview: {narrative[:80]}...")
 
-    print("✦ [7/9] Testing Decision Tree baseline vs Random Forest...")
+    print("✦ [7/10] Testing Decision Tree baseline vs Random Forest...")
     df = generate_benchmark_dataset(samples_per_class=20)
     dt = train_custom_classifier(df, max_depth=8, model_type="decision_tree")
     assert "error" not in dt and type(dt["model"]).__name__ == "DecisionTreeClassifier", dt.get("error")
@@ -140,7 +149,7 @@ def run_tests():
     assert list(comparison["Model"]) == ["Decision Tree", "Random Forest"]
     print("  ✓ " + " | ".join(f"{r.Model}: test {r._3:.1%}, CV {r._4:.1%}" for r in comparison.itertuples()))
 
-    print("✦ [8/9] Testing SQLite Local Database Storage...")
+    print("✦ [8/10] Testing SQLite Local Database Storage...")
     # Use a throwaway database so test runs never add rows to the real career_records.db
     real_db = app.DB_FILE
     tmp_dir = tempfile.TemporaryDirectory()
@@ -163,10 +172,13 @@ def run_tests():
     tmp_dir.cleanup()
     print(f"  ✓ Database record verified in a temporary database. Total rows: {len(df_records)}")
 
-    print("✦ [9/9] Testing Learning Pathway & Narration Guardrails...")
+    print("✦ [9/10] Testing Learning Pathway & Narration Guardrails...")
     certs = recommend_certifications(gaps, target_career=top_career["career"], student_year=profile.year)
-    os.environ.pop("GEMINI_API_KEY", None)
+    # Simulate a machine with no Gemini key, whatever secrets.toml or the environment contains
+    real_setting = app.get_app_setting
+    app.get_app_setting = lambda name, default="": default
     guidance = generate_guidance(profile, top_career, gaps, certs)
+    app.get_app_setting = real_setting
     assert guidance["source"] == "template" and "not configured" in guidance["note"]
     pathway = guidance["pathway"]
     assert pathway and [s["id"] for s in pathway] == [f"S{i + 1}" for i in range(len(pathway))]
@@ -205,7 +217,60 @@ def run_tests():
     assert failed["source"] == "template" and "failed" in failed["note"]
     print(f"  ✓ Pathway steps: {len(pathway)}; valid narration accepted; {len(rejections)} invalid narrations rejected; failures fall back to template")
 
-    print("\n🎉 ALL 9/9 TEST MODULES PASSED PERFECTLY!\n")
+    print("✦ [10/10] Testing Adaptive Progress Tracking & Held Certifications...")
+    import sqlite3
+    tmp_dir = tempfile.TemporaryDirectory()
+    app.DB_FILE = os.path.join(tmp_dir.name, "progress_records.db")
+    # A database in the original schema (no progress columns) must migrate without losing rows
+    conn = sqlite3.connect(app.DB_FILE)
+    conn.execute("CREATE TABLE records (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL, gpa REAL NOT NULL, "
+                 "academic_year TEXT NOT NULL, top_career TEXT NOT NULL, match_score REAL NOT NULL, confidence TEXT NOT NULL, "
+                 "work_style TEXT NOT NULL, top_driver TEXT NOT NULL, critical_gap TEXT NOT NULL)")
+    conn.execute("INSERT INTO records (timestamp, gpa, academic_year, top_career, match_score, confidence, work_style, top_driver, critical_gap) "
+                 "VALUES ('2026-09-01 10:00:00', 3.1, '2nd Year', 'Data Scientist', 61.0, 'Moderate', 'Technical Specialist', 'SQL', 'None')")
+    conn.commit()
+    conn.close()
+    init_database()
+    assert len(fetch_all_records()) == 1, "Migration must keep existing rows"
+
+    def assess(p, sid):
+        res = run_hybrid_inference(p)
+        g = calculate_skill_gaps(p, res[0]["career"])
+        prev = fetch_student_history(sid)
+        progress = compare_assessments(prev[-1], p, res, g) if prev else None
+        save_student_record(p.gpa, p.year, res[0]["title"], res[0]["final_score"], res[0]["confidence"], p.work_style, "x", "y",
+                            student_id=sid, career_scores={r["career"]: r["match_pct"] for r in res},
+                            profile=profile_to_dict(p), gaps=[x["skill_name"] for x in g])
+        return res, progress
+
+    weaker = StudentProfile(3.2, "2nd Year", dict(profile.core_modules, Math_Stats=70), {}, dict(profile.tech_skills, ML_AI=2, Python=3),
+                            profile.soft_skills[:2], [], profile.work_style, False, 2, "")
+    _, first = assess(weaker, " d/bit/24/0088 ")
+    assert first is None, "First assessment has nothing to compare with"
+    stronger = StudentProfile(3.6, "3rd Year", profile.core_modules, profile.electives, profile.tech_skills,
+                              profile.soft_skills, [], profile.work_style, True, 4, "AWS Cloud Practitioner")
+    res2, progress = assess(stronger, "D/BIT/24/0088")
+    history = fetch_student_history("d/bit/24/0088")
+    assert len(history) == 2, "IDs must match regardless of case and spacing"
+    assert any(s["skill"] == "Machine Learning & AI" and s["improved"] for s in progress["skill_changes"])
+    assert "Completed an internship" in progress["events"]
+    assert any("AWS Certified Cloud Practitioner" in e for e in progress["events"]), progress["events"]
+    assert progress["insights"], "Progress should explain how the recommendation adapted"
+    assert len(fetch_all_records("D/BIT/24/0088")) == 2 and len(fetch_all_records()) == 3
+
+    assert parse_held_certifications("AWS Cloud Practitioner, CS50x") == ["aws-cloud-practitioner"]
+    assert parse_held_certifications("AWS") == [], "Ambiguous entries matching several certs must be ignored"
+    cloud_gaps = calculate_skill_gaps(stronger, "Cloud Architect")
+    without = recommend_certifications(cloud_gaps, "Cloud Architect", "1st Year")
+    held = recommend_certifications(cloud_gaps, "Cloud Architect", "1st Year", held_cert_ids=("aws-cloud-practitioner",))
+    assert "aws-cloud-practitioner" in [c["id"] for c in without], "Fixture should recommend the cert when it is not held"
+    assert "aws-cloud-practitioner" not in [c["id"] for c in held], "Held certifications must not be recommended again"
+    app.DB_FILE = real_db
+    tmp_dir.cleanup()
+    print(f"  ✓ Old schema migrated; 2 assessments tracked for one ID; {len(progress['skill_changes'])} skill changes, "
+          f"{len(progress['events'])} profile events; held certs excluded from recommendations")
+
+    print("\n🎉 ALL 10/10 TEST MODULES PASSED PERFECTLY!\n")
 
 
 if __name__ == "__main__":

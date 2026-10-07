@@ -23,6 +23,7 @@ Live app: https://eai-career-guidance-ai.streamlit.app/
 - **Cosine-Similarity Industry Certifications**: recommendations from a curated catalogue of 19 certifications (`certifications.json`).
 - **Dataset & ML Model Studio**: benchmark dataset generation, custom CSV upload, model retraining, Decision Tree vs Random Forest comparison, feature importances, and batch prediction.
 - **SQLite History & Analytics**: built-in persistence (`career_records.db`) with an advisor history view.
+- **Adaptive Progress Tracking**: enter an optional student ID and each assessment is saved against it. Re-running shows how the recommendation adapted: match changes per career, skills that improved, gaps closed, and a trend chart. Certifications the student already holds are recognised and no longer recommended. The History tab can be filtered by student ID.
 
 ## 📁 File Structure
 ```

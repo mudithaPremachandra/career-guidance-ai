@@ -15,6 +15,7 @@ A complete, standalone, high-tech cyber/AI Streamlit application integrating:
 11. Dataset & Model Studio (Upload Custom CSV / Load Benchmark / Train Model / Feature Importances / Batch Predictions)
 12. Local SQLite persistence for history logging
 13. Personalized learning pathway + template NLG, with optional verified Gemini narration
+14. Adaptive progress tracking per student ID (match changes, closed gaps, held certifications)
 
 Theme: Futuristic High-Tech / Cyber AI / Glassmorphism
 """
@@ -388,11 +389,20 @@ st.markdown(
 # -----------------------------------------------------------------------------
 # 2. LOCAL SQLITE DATABASE LAYER
 # -----------------------------------------------------------------------------
-DB_FILE = "career_records.db"
+# CAREER_DB_FILE lets tests point the app at a throwaway database before import
+DB_FILE = os.environ.get("CAREER_DB_FILE", "career_records.db")
+
+# Columns added for per-student progress tracking; older databases are migrated in place by init_database()
+PROGRESS_COLUMNS = {
+    "student_id": "TEXT NOT NULL DEFAULT ''",
+    "career_scores": "TEXT NOT NULL DEFAULT '{}'",
+    "profile_json": "TEXT NOT NULL DEFAULT '{}'",
+    "gaps_json": "TEXT NOT NULL DEFAULT '[]'",
+}
 
 
 def init_database() -> None:
-    """Initializes the SQLite database with the records table."""
+    """Initializes the SQLite records table and adds any missing progress-tracking columns."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute(
@@ -411,8 +421,17 @@ def init_database() -> None:
         )
         """
     )
+    existing = {row[1] for row in cursor.execute("PRAGMA table_info(records)")}
+    for column, definition in PROGRESS_COLUMNS.items():
+        if column not in existing:
+            cursor.execute(f"ALTER TABLE records ADD COLUMN {column} {definition}")
     conn.commit()
     conn.close()
+
+
+def normalize_student_id(student_id: str) -> str:
+    """Normalizes a pseudonymous student ID so 'd/bit/24/0088 ' and 'D/BIT/24/0088' match."""
+    return " ".join((student_id or "").split()).upper()
 
 
 def save_student_record(
@@ -424,6 +443,10 @@ def save_student_record(
     work_style: str,
     top_driver: str,
     critical_gap: str,
+    student_id: str = "",
+    career_scores: Dict[str, float] = None,
+    profile: Dict[str, Any] = None,
+    gaps: List[str] = None,
 ) -> None:
     """Saves a student profile evaluation result into SQLite."""
     conn = sqlite3.connect(DB_FILE)
@@ -432,9 +455,10 @@ def save_student_record(
     cursor.execute(
         """
         INSERT INTO records (
-            timestamp, gpa, academic_year, top_career, match_score, 
-            confidence, work_style, top_driver, critical_gap
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            timestamp, gpa, academic_year, top_career, match_score,
+            confidence, work_style, top_driver, critical_gap,
+            student_id, career_scores, profile_json, gaps_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             now_str,
@@ -446,29 +470,67 @@ def save_student_record(
             work_style,
             top_driver,
             critical_gap,
+            normalize_student_id(student_id),
+            json.dumps(career_scores or {}),
+            json.dumps(profile or {}),
+            json.dumps(gaps or []),
         ),
     )
     conn.commit()
     conn.close()
 
 
-def fetch_all_records() -> pd.DataFrame:
-    """Retrieves all past student submissions from SQLite."""
+def fetch_all_records(student_id: str = "") -> pd.DataFrame:
+    """Retrieves past student submissions from SQLite, optionally for one student ID."""
     conn = sqlite3.connect(DB_FILE)
     try:
-        df = pd.read_sql_query(
-            "SELECT id AS 'ID', timestamp AS 'Timestamp', gpa AS 'GPA', "
+        query = (
+            "SELECT id AS 'ID', timestamp AS 'Timestamp', student_id AS 'Student ID', gpa AS 'GPA', "
             "academic_year AS 'Year', top_career AS 'Recommended Role', "
             "match_score AS 'Match %', confidence AS 'Confidence', "
             "work_style AS 'Work Style', top_driver AS 'Key Strength', "
-            "critical_gap AS 'Primary Gap' FROM records ORDER BY id DESC",
-            conn,
+            "critical_gap AS 'Primary Gap' FROM records"
         )
+        params: Tuple = ()
+        if normalize_student_id(student_id):
+            query += " WHERE student_id = ?"
+            params = (normalize_student_id(student_id),)
+        df = pd.read_sql_query(query + " ORDER BY id DESC", conn, params=params)
     except Exception:
         df = pd.DataFrame()
     finally:
         conn.close()
     return df
+
+
+def fetch_student_history(student_id: str) -> List[Dict[str, Any]]:
+    """Returns one student's past assessments, oldest first, with their stored JSON fields parsed."""
+    sid = normalize_student_id(student_id)
+    if not sid:
+        return []
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        rows = conn.execute(
+            "SELECT id, timestamp, top_career, match_score, career_scores, profile_json, gaps_json "
+            "FROM records WHERE student_id = ? ORDER BY id ASC",
+            (sid,),
+        ).fetchall()
+    except Exception:
+        rows = []
+    finally:
+        conn.close()
+    return [
+        {
+            "id": r[0],
+            "timestamp": r[1],
+            "top_career": r[2],
+            "match_pct": r[3],
+            "career_scores": json.loads(r[4] or "{}"),
+            "profile": json.loads(r[5] or "{}"),
+            "gaps": json.loads(r[6] or "[]"),
+        }
+        for r in rows
+    ]
 
 
 def clear_all_records() -> None:
@@ -1862,6 +1924,7 @@ def recommend_certifications(
     gaps: List[Dict[str, Any]],
     target_career: str = "Software Engineer",
     student_year: str = "3rd Year",
+    held_cert_ids: Tuple[str, ...] = (),
 ) -> List[Dict[str, Any]]:
     """
     Computes Gap-Weighted Cosine Similarity with Domain Pruning and Academic Tier Matching.
@@ -1911,6 +1974,8 @@ def recommend_certifications(
     scored_certs = []
     
     for cert in catalog:
+        if cert.get("id") in held_cert_ids:
+            continue  # already completed
         cert_domains = set(cert.get("domains", []))
         cert_keys = cert.get("skill_keys", cert.get("skills", []))
         cert_vector = cert.get("vector", {})
@@ -2299,6 +2364,155 @@ def generate_guidance(
     return guidance
 
 
+# 7.3 ADAPTIVE PROGRESS TRACKING (compares a student's new assessment with their previous one)
+CERT_MATCH_STOPWORDS = {"certified", "certification", "certificate", "cert", "the", "of", "and", "for", "in"}
+
+
+def _cert_tokens(text: str) -> set:
+    return {t for t in re.findall(r"[a-z0-9]+", text.lower()) if t not in CERT_MATCH_STOPWORDS}
+
+
+def parse_held_certifications(text: str) -> List[str]:
+    """Matches the free-text 'existing certifications' field against the catalog.
+
+    An entry is recognised when all its significant words appear in exactly one catalog title, so
+    "AWS Cloud Practitioner" matches "AWS Certified Cloud Practitioner (CLF-C02)" while vague
+    entries such as "security" (several matches) or "CS50x" (no match) are ignored.
+    """
+    held: List[str] = []
+    for entry in (text or "").split(","):
+        tokens = _cert_tokens(entry)
+        if not tokens:
+            continue
+        matches = [c["id"] for c in CERTIFICATION_CATALOG if tokens <= _cert_tokens(c.get("title", ""))]
+        if len(matches) == 1 and matches[0] not in held:
+            held.append(matches[0])
+    return held
+
+
+def cert_titles(cert_ids: List[str]) -> List[str]:
+    """Maps catalog IDs to certification titles."""
+    titles = {c["id"]: c.get("title", c["id"]) for c in CERTIFICATION_CATALOG}
+    return [titles.get(i, i) for i in cert_ids]
+
+
+def profile_to_dict(profile: StudentProfile) -> Dict[str, Any]:
+    """Serializes the profile fields that progress tracking compares between assessments."""
+    return {
+        "gpa": round(profile.gpa, 2),
+        "year": profile.year,
+        "core_modules": dict(profile.core_modules),
+        "tech_skills": dict(profile.tech_skills),
+        "electives": sorted(profile.electives.keys()),
+        "soft_skills": sorted(profile.soft_skills),
+        "has_internship": bool(profile.has_internship),
+        "projects_count": int(profile.projects_count),
+        "held_certs": parse_held_certifications(profile.existing_certs),
+    }
+
+
+def compare_assessments(
+    previous: Dict[str, Any], profile: StudentProfile, results: List[Dict[str, Any]], gaps: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """Explains how the recommendation adapted since the student's previous assessment."""
+    prev_profile = previous.get("profile", {})
+    curr_profile = profile_to_dict(profile)
+    prev_scores = previous.get("career_scores", {})
+    top = results[0]
+
+    # In current ranking order
+    career_changes = [
+        {"career": r["title"], "before": prev_scores[r["career"]], "after": r["match_pct"], "change": round(r["match_pct"] - prev_scores[r["career"]], 1)}
+        for r in results if r["career"] in prev_scores
+    ]
+
+    skill_changes = []
+    for group, scale in [("core_modules", 100), ("tech_skills", 5)]:
+        before = prev_profile.get(group, {})
+        for key, now in curr_profile[group].items():
+            if key in before and before[key] != now:
+                skill_changes.append({"skill": SKILL_LABELS.get(key, key), "before": f"{before[key]:g}/{scale}", "after": f"{now:g}/{scale}", "improved": now > before[key]})
+
+    events = []
+    # Only meaningful when the previous run stored a profile (rows from before progress tracking did not)
+    new_certs = [c for c in curr_profile["held_certs"] if c not in prev_profile.get("held_certs", [])] if prev_profile else []
+    if prev_profile:
+        if curr_profile["gpa"] != prev_profile.get("gpa"):
+            events.append(f"GPA {prev_profile.get('gpa'):.2f} → {curr_profile['gpa']:.2f}")
+        if curr_profile["has_internship"] and not prev_profile.get("has_internship"):
+            events.append("Completed an internship")
+        if curr_profile["projects_count"] != prev_profile.get("projects_count"):
+            events.append(f"Projects {prev_profile.get('projects_count')} → {curr_profile['projects_count']}")
+        if new_certs:
+            events.append("New certifications: " + ", ".join(cert_titles(new_certs)))
+        new_softs = [s for s in curr_profile["soft_skills"] if s not in prev_profile.get("soft_skills", [])]
+        if new_softs:
+            events.append("New soft skills: " + ", ".join(new_softs))
+        new_electives = [e for e in curr_profile["electives"] if e not in prev_profile.get("electives", [])]
+        if new_electives:
+            events.append("New electives: " + ", ".join(new_electives))
+
+    # Gap lists are measured against the top career, so they only compare when the top career is unchanged
+    same_top = previous.get("top_career") == top["title"]
+    curr_gap_names = [g["skill_name"] for g in gaps]
+    closed_gaps = [g for g in previous.get("gaps", []) if g not in curr_gap_names] if same_top else []
+    new_gaps = [g for g in curr_gap_names if g not in previous.get("gaps", [])] if same_top else []
+
+    before_top = prev_scores.get(top["career"])
+    insights = []
+    if not same_top:
+        insights.append(f"Your top recommendation changed from {previous.get('top_career')} to {top['title']}.")
+    if before_top is not None:
+        diff = round(top["match_pct"] - before_top, 1)
+        direction = "rose" if diff > 0 else "fell" if diff < 0 else "stayed"
+        insights.append(f"Your {top['title']} match {direction} from {before_top}% to {top['match_pct']}% ({diff:+.1f} pts)." if diff else f"Your {top['title']} match stayed at {top['match_pct']}%.")
+    if new_certs:
+        insights.append("You now hold " + ", ".join(cert_titles(new_certs)) + (", so it is" if len(new_certs) == 1 else ", so they are") + " no longer recommended and other certifications take their place.")
+    if closed_gaps:
+        insights.append("Gaps closed since last time: " + ", ".join(closed_gaps) + ".")
+    if new_gaps:
+        insights.append("New gaps to watch: " + ", ".join(new_gaps) + ".")
+    if not skill_changes and not events:
+        insights.append("Your profile is unchanged since the last assessment, so the recommendation is the same.")
+
+    return {
+        "previous_timestamp": previous.get("timestamp", ""),
+        "previous_top": previous.get("top_career", ""),
+        "top_before": before_top,
+        "top_after": top["match_pct"],
+        "same_top": same_top,
+        "career_changes": career_changes,
+        "skill_changes": skill_changes,
+        "events": events,
+        "closed_gaps": closed_gaps,
+        "new_gaps": new_gaps,
+        "insights": insights,
+    }
+
+
+def build_progress_chart(history: List[Dict[str, Any]], careers: List[str]):
+    """Line chart of match % across a student's assessments for the given career keys."""
+    titles = {k: v["title"] for k, v in CAREER_UNIVERSE.items()}
+    fig = go.Figure()
+    x = [f"#{i + 1} · {h['timestamp'][:10]}" for i, h in enumerate(history)]
+    palette = ["#00F0FF", "#C084FC", "#FBBF24", "#34D399", "#FB7185"]
+    for i, career in enumerate(careers):
+        y = [h["career_scores"].get(career) for h in history]
+        if any(v is not None for v in y):
+            fig.add_trace(go.Scatter(x=x, y=y, mode="lines+markers", name=titles.get(career, career),
+                                     line=dict(color=palette[i % len(palette)], width=2), connectgaps=True))
+    fig.update_layout(
+        height=300,
+        margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 23, 42, 0.5)",
+        yaxis=dict(title="Match %", tickfont=dict(color="#CBD5E1"), gridcolor="rgba(51, 65, 85, 0.4)"),
+        xaxis=dict(tickfont=dict(color="#CBD5E1")),
+        legend=dict(font=dict(color="#E2E8F0"), orientation="h", y=-0.25),
+    )
+    return fig
+
+
 # -----------------------------------------------------------------------------
 # 8. STREAMLIT APPLICATION UI
 # -----------------------------------------------------------------------------
@@ -2439,7 +2653,7 @@ def apply_preset(preset_key: str) -> None:
     top = res[0]
     sh = calculate_shap_contributions(prof, top["career"])
     gp = calculate_skill_gaps(prof, top["career"])
-    rc = recommend_certifications(gp, target_career=top["career"], student_year=year)
+    rc = recommend_certifications(gp, target_career=top["career"], student_year=year, held_cert_ids=tuple(parse_held_certifications(certs)))
     gd = generate_guidance(prof, top, gp, rc)
     st.session_state["evaluation_data"] = {
         "profile": prof,
@@ -2479,7 +2693,7 @@ if "evaluation_data" not in st.session_state:
     def_top = def_res[0]
     def_sh = calculate_shap_contributions(def_prof, def_top["career"])
     def_gp = calculate_skill_gaps(def_prof, def_top["career"])
-    def_rc = recommend_certifications(def_gp, target_career=def_top["career"], student_year=def_year)
+    def_rc = recommend_certifications(def_gp, target_career=def_top["career"], student_year=def_year, held_cert_ids=tuple(parse_held_certifications(def_prof.existing_certs)))
     def_gd = generate_guidance(def_prof, def_top, def_gp, def_rc)
     st.session_state["evaluation_data"] = {
         "profile": def_prof,
@@ -2535,6 +2749,13 @@ with tab1:
         if qcol4.button("📈 Load IT Business Analyst Profile", use_container_width=True):
             apply_preset("business_analyst")
             st.rerun()
+
+    in_student_id = st.text_input(
+        "🪪 Student ID (optional, enables progress tracking)",
+        placeholder="e.g. your registration number or a nickname",
+        help="Use the same ID each time to compare assessments over time. Use a pseudonymous ID rather than your full name.",
+        key="student_id_input",
+    )
 
     # Section 1: Academic Standing & Core Modules
     st.markdown(
@@ -2789,6 +3010,9 @@ with tab1:
         in_internship = st.toggle("Completed University / Industry Internship", value=False, key="intern_toggle")
         in_projects = st.number_input("Completed Technical Projects", min_value=0, max_value=20, value=3, key="projects_input")
         in_certs = st.text_input("Existing Certifications (comma separated)", placeholder="e.g. AWS Cloud Practitioner, CS50x", key="certs_input")
+        held_ids = parse_held_certifications(in_certs)
+        if held_ids:
+            st.caption("✓ Recognised (won't be recommended again): " + ", ".join(cert_titles(held_ids)))
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -2837,11 +3061,16 @@ with tab1:
         # Calculate SHAP & Gaps
         shap_df = calculate_shap_contributions(profile, top_rec["career"])
         gaps = calculate_skill_gaps(profile, top_rec["career"])
-        rec_certs = recommend_certifications(gaps, target_career=top_rec["career"], student_year=in_year)
+        rec_certs = recommend_certifications(gaps, target_career=top_rec["career"], student_year=in_year, held_cert_ids=tuple(parse_held_certifications(in_certs)))
         guidance = generate_guidance(profile, top_rec, gaps, rec_certs)
 
         top_driver = shap_df[shap_df["Delta"] > 0].iloc[-1]["Feature"] if not shap_df[shap_df["Delta"] > 0].empty else "Academic Foundation"
         critical_gap = gaps[0]["skill_name"] if gaps else "None (Target Met)"
+
+        # Compare with this student's previous assessment before saving the new one
+        student_id = normalize_student_id(in_student_id)
+        previous_runs = fetch_student_history(student_id)
+        progress = compare_assessments(previous_runs[-1], profile, inference_results, gaps) if previous_runs else None
 
         # Save to SQLite
         save_student_record(
@@ -2853,6 +3082,10 @@ with tab1:
             work_style=in_work_style,
             top_driver=top_driver,
             critical_gap=critical_gap,
+            student_id=student_id,
+            career_scores={r["career"]: r["match_pct"] for r in inference_results},
+            profile=profile_to_dict(profile),
+            gaps=[g["skill_name"] for g in gaps],
         )
 
         # Store in Session State
@@ -2865,6 +3098,9 @@ with tab1:
             "certs": rec_certs,
             "narrative": guidance["narrative"],
             "guidance": guidance,
+            "student_id": student_id,
+            "progress": progress,
+            "history": fetch_student_history(student_id),
         }
 
         st.toast("⚡ Multi-Engine Evaluation complete! View your results in Tab 02 // Guidance & Roadmap.", icon="✅")
@@ -3003,6 +3239,54 @@ with tab2:
         )
         if guidance and guidance.get("note"):
             st.caption(("✨ " if guidance["source"] == "gemini" else "📝 ") + guidance["note"])
+
+        # Progress since this student's previous assessment (how the recommendations adapted)
+        if eval_data.get("student_id"):
+            progress = eval_data.get("progress")
+            history = eval_data.get("history") or []
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<div class='pf-card-title'>📈 Progress Since Your Last Assessment</div>", unsafe_allow_html=True)
+            if not progress:
+                st.info(
+                    f"First assessment saved for student ID {eval_data['student_id']}. Run it again after you improve a skill, "
+                    "finish a certification or change your interests to see how your recommendations adapt."
+                )
+            else:
+                st.markdown(
+                    f"<div class='pf-card-desc'>Compared with your assessment on {html.escape(progress['previous_timestamp'])} "
+                    f"({len(history)} assessments saved for this ID).</div>",
+                    unsafe_allow_html=True,
+                )
+                pc1, pc2, pc3 = st.columns(3)
+                before = progress["top_before"]
+                pc1.metric(
+                    f"{top_rec['title']} match",
+                    f"{progress['top_after']}%",
+                    delta=f"{progress['top_after'] - before:+.1f} pts" if before is not None and progress["top_after"] != before else None,
+                )
+                pc2.metric("Previous top recommendation", progress["previous_top"])
+                pc3.metric("Gaps closed", len(progress["closed_gaps"]) if progress["same_top"] else "n/a",
+                           help="Only comparable when the top recommendation is unchanged.")
+                for line in progress["insights"]:
+                    st.markdown(f"- {line}")
+
+                pcol1, pcol2 = st.columns(2)
+                with pcol1:
+                    st.markdown("**What changed in your profile**")
+                    if not progress["events"] and not progress["skill_changes"]:
+                        st.caption("No changes since the last assessment.")
+                    for e in progress["events"]:
+                        st.markdown(f"- {e}")
+                    for s in progress["skill_changes"]:
+                        st.markdown(f"- {'⬆️' if s['improved'] else '⬇️'} {s['skill']}: {s['before']} → {s['after']}")
+                with pcol2:
+                    st.markdown("**Match % across your assessments**")
+                    st.plotly_chart(
+                        build_progress_chart(history, [r["career"] for r in results[:3]]),
+                        use_container_width=True,
+                        config={"displayModeBar": False},
+                        key="progress_chart_results",
+                    )
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -3511,7 +3795,20 @@ with tab4:
         unsafe_allow_html=True,
     )
 
-    records_df = fetch_all_records()
+    st.caption(
+        "Records are kept in this app's SQLite file. On Streamlit Community Cloud that file is shared by every visitor "
+        "and resets whenever the app restarts or is redeployed."
+    )
+    history_filter = st.text_input("Filter by Student ID", placeholder="Show every assessment for one student", key="history_filter")
+    records_df = fetch_all_records(history_filter)
+
+    student_history = fetch_student_history(history_filter)
+    tracked = [h for h in student_history if h["career_scores"]]
+    if len(tracked) >= 2:
+        latest = tracked[-1]["career_scores"]
+        top_keys = sorted(latest, key=latest.get, reverse=True)[:3]
+        st.markdown(f"##### 📈 Trajectory for {normalize_student_id(history_filter)}")
+        st.plotly_chart(build_progress_chart(tracked, top_keys), use_container_width=True, config={"displayModeBar": False}, key="progress_chart_history")
 
     if records_df.empty:
         st.info("⚡ No historical student records found in `career_records.db`. Submitting profiles in **01 // Profile Intake** will automatically populate this database.")
