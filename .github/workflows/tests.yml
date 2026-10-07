@@ -31,7 +31,7 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pyflakes
+        run: pip install -r requirements.txt pyflakes==3.4.0
 
       - name: Lint (undefined names, unused imports)
         run: python -m pyflakes app.py src tests
