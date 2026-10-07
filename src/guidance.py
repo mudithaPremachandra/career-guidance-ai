@@ -29,6 +29,7 @@ def generate_executive_narrative(profile: StudentProfile, top_career: Dict[str, 
     archetype = top_career.get("archetype", "Engineering & Architecture")
     matched_softs = top_career.get("matched_soft_skills", [])
     strength = fit_strength_label(top_career["final_score"])
+    article = "an" if strength[0] in "aeiou" else "a"
 
     best_module = max(profile.core_modules.items(), key=lambda x: x[1])
     best_module_name = SKILL_LABELS.get(best_module[0], best_module[0])
@@ -48,7 +49,7 @@ def generate_executive_narrative(profile: StudentProfile, top_career: Dict[str, 
 
     sentence1 = (
         f"Based on multi-engine evaluation, your performance in <b style='color: #38BDF8;'>{best_module_name}</b> "
-        f"{soft_note} shows {"an" if strength[0] in "aeiou" else "a"} {strength} <b style='color: #00F0FF;'>{match_pct}% alignment</b> with the <b style='color: #F8FAFC;'>{role_title}</b> career path."
+        f"{soft_note} shows {article} {strength} <b style='color: #00F0FF;'>{match_pct}% alignment</b> with the <b style='color: #F8FAFC;'>{role_title}</b> career path."
     )
     return f"{sentence1} {gap_advice}"
 

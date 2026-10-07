@@ -56,7 +56,8 @@ career-guidance-ai/
 │   └── benchmark_dataset.csv # Synthetic training cohort (405 students, 45 per career)
 │
 ├── tests/
-│   └── test_pipeline.py     # Verification and unit test script
+│   ├── test_pipeline.py     # Engine tests (11 modules)
+│   └── test_app_smoke.py    # Headless UI smoke test
 │
 ├── models/                  # Saved classifiers and their evaluation (see models/README.md)
 │   ├── random_forest.joblib # Default ML engine model
@@ -89,8 +90,10 @@ streamlit run app.py
 
 5. Run the tests (they use a temporary database, not `data/career_records.db`):
 ```powershell
-python tests/test_pipeline.py
+python tests/test_pipeline.py     # engine tests (11 modules)
+python tests/test_app_smoke.py    # runs app.py headlessly through the main workflow
 ```
+Both also run automatically on every pull request into `main` (GitHub Actions, `.github/workflows/tests.yml`).
 
 6. (Optional) Retrain and save the models, metrics and dataset:
 ```powershell
