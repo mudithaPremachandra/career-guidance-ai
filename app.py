@@ -457,6 +457,15 @@ st.markdown(
         text-overflow: ellipsis;
     }
 
+    /* "Press Enter to apply" hint: Streamlit pins it 2px above the field's bottom edge, which leaves the text low;
+       stretch it to the field's inner height (36px) and centre it vertically */
+    [data-testid="stNumberInput"] [data-testid="InputInstructions"],
+    [data-testid="stTextInput"] [data-testid="InputInstructions"] {
+        height: 36px;
+        display: flex;
+        align-items: center;
+    }
+
     /* Hide Streamlit's toolbar and running indicator: the loading overlay shows progress instead */
     [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stStatusWidget"] {
         display: none !important;
