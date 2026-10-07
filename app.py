@@ -2140,84 +2140,7 @@ current_tab = st.session_state["active_nav_tab"]
 # TAB 1: ① PROFILE (CAREER PROFILE INTAKE & COMPETENCIES)
 # -----------------------------------------------------------------------------
 if current_tab == "① Profile":
-    # 1. Quick Load Persona Profile Cards
-    st.markdown(
-        "<p style='font-size: clamp(0.85rem, 0.95vw, 1.05rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin-top: 0.5rem; margin-bottom: 0.75rem;'>⚡ Quick Load Student Personas</p>",
-        unsafe_allow_html=True,
-    )
-    pcol1, pcol2, pcol3, pcol4 = st.columns(4)
-
-    with pcol1:
-        st.markdown(
-            """
-            <div class="pf-persona-card">
-                <div>
-                    <div class="pf-persona-icon">🤖</div>
-                    <div class="pf-persona-title">AI Engineer</div>
-                    <div class="pf-persona-desc">Deep neural networks, PyTorch, research algorithms & mathematics.</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button("Load Profile", key="btn_p_ai", use_container_width=True):
-            apply_preset("ai_engineer")
-            st.rerun()
-
-    with pcol2:
-        st.markdown(
-            """
-            <div class="pf-persona-card">
-                <div>
-                    <div class="pf-persona-icon">☁️</div>
-                    <div class="pf-persona-title">Cloud Architect</div>
-                    <div class="pf-persona-desc">Distributed topologies, Kubernetes, Linux systems & DevOps infrastructure.</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button("Load Profile", key="btn_p_cloud", use_container_width=True):
-            apply_preset("cloud_architect")
-            st.rerun()
-
-    with pcol3:
-        st.markdown(
-            """
-            <div class="pf-persona-card">
-                <div>
-                    <div class="pf-persona-icon">💻</div>
-                    <div class="pf-persona-title">Full-Stack Engineer</div>
-                    <div class="pf-persona-desc">Modern web architectures, scalable microservices & frontend systems.</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button("Load Profile", key="btn_p_fs", use_container_width=True):
-            apply_preset("fullstack_engineer")
-            st.rerun()
-
-    with pcol4:
-        st.markdown(
-            """
-            <div class="pf-persona-card">
-                <div>
-                    <div class="pf-persona-icon">📊</div>
-                    <div class="pf-persona-title">IT Business Analyst</div>
-                    <div class="pf-persona-desc">Agile sprint governance, stakeholder roadmaps & SQL data modeling.</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button("Load Profile", key="btn_p_ba", use_container_width=True):
-            apply_preset("business_analyst")
-            st.rerun()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # 2. Section: Academic Foundation (Direct Sliders with Icons & Marks)
+    # 1. Section: Academic Foundation (Direct Sliders with Icons & Marks)
     st.markdown(
         """
         <div class="pf-card">
@@ -2470,7 +2393,71 @@ if current_tab == "① Profile":
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # 7. Profile Snapshot Summary Gauge Cards
+    # 5. Section: Advanced Profile Preferences & Practical Experience
+    st.markdown(
+        """
+        <div class="pf-card">
+            <div class="pf-card-title">⚙️ Profile Preferences & Practical Experience</div>
+            <div class="pf-card-desc">Configure your preferred career work style, target industry domains, and hands-on portfolio experience.</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    adv_col1, adv_col2 = st.columns(2)
+
+    with adv_col1:
+        style_list = ["Technical Specialist", "Consulting / Management", "R&D / Creative"]
+        def_style = st.session_state.get("work_style_input", "Technical Specialist")
+        in_work_style = st.radio(
+            "💼 Work Style Preference",
+            style_list,
+            index=style_list.index(def_style) if def_style in style_list else 0,
+            horizontal=True,
+            key="work_style_input",
+            help="Your preferred day-to-day role dynamic and technical focus.",
+        )
+        in_domains = st.multiselect(
+            "🌐 Desired Industry Domains",
+            [
+                "Artificial Intelligence & ML",
+                "Enterprise Cloud & DevOps",
+                "Full-Stack Web Engineering",
+                "Information Security & Defense",
+                "Interactive Gaming & Graphics",
+                "Digital Product Design (UX/UI)",
+                "Fintech & Data Analytics",
+                "Automated Manufacturing & Robotics",
+            ],
+            default=st.session_state.get("domains_input", ["Artificial Intelligence & ML", "Enterprise Cloud & DevOps"]),
+            key="domains_input",
+            help="Industries and software engineering subfields you are most interested in.",
+        )
+
+    with adv_col2:
+        in_internship = st.toggle(
+            "💼 Completed University / Industry Internship",
+            value=st.session_state.get("intern_toggle", True),
+            key="intern_toggle",
+            help="Toggle if you have completed an internship or formal work experience.",
+        )
+        in_projects = st.number_input(
+            "🚀 Completed Technical Projects",
+            min_value=0,
+            max_value=20,
+            value=st.session_state.get("projects_input", 3),
+            key="projects_input",
+            help="Number of major academic or personal projects in your portfolio.",
+        )
+        in_certs = st.text_input(
+            "📜 Existing Certifications (comma separated)",
+            value=st.session_state.get("certs_input", "AWS Cloud Practitioner"),
+            key="certs_input",
+            help="List any credentials you already hold.",
+        )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 6. Profile Snapshot Summary Gauge Cards
     avg_core = (m_dsa + m_oop + m_dbms + m_os + m_se + m_math) / 6.0
     avg_tech = ((t_python + t_jcpp + t_sql + t_web + t_cloud + t_ml + t_mob + t_sec) / 40.0) * 100.0
 
@@ -2533,16 +2520,15 @@ if current_tab == "① Profile":
         )
 
     with snap4:
-        proj_val = st.session_state.get("projects_input", 3)
         st.markdown(
             f"""
             <div class="pf-snapshot-card">
                 <div class="pf-snapshot-title">
                     <span>🚀 Projects / Experience</span>
-                    <span style="color: #FBBF24; font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem;">{proj_val} Projects</span>
+                    <span style="color: #FBBF24; font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem;">{in_projects} Projects</span>
                 </div>
                 <div class="pf-progress-track">
-                    <div class="pf-progress-fill" style="width: {min(100, proj_val * 20)}%; background: linear-gradient(90deg, #D97706, #FBBF24);"></div>
+                    <div class="pf-progress-fill" style="width: {min(100, in_projects * 20)}%; background: linear-gradient(90deg, #D97706, #FBBF24);"></div>
                 </div>
                 <div style="font-size: 0.78rem; color: #94A3B8;">Verified Portfolio Builds</div>
             </div>
@@ -2550,42 +2536,7 @@ if current_tab == "① Profile":
             unsafe_allow_html=True,
         )
 
-    # 8. Section: Advanced Profile Information (Collapsible)
-    with st.expander("▸ Advanced Profile Preferences & Experience", expanded=False):
-        adv_col1, adv_col2 = st.columns(2)
-
-        with adv_col1:
-            style_list = ["Technical Specialist", "Consulting / Management", "R&D / Creative"]
-            def_style = st.session_state.get("work_style_input", "Technical Specialist")
-            in_work_style = st.radio(
-                "Work Style Preference",
-                style_list,
-                index=style_list.index(def_style) if def_style in style_list else 0,
-                horizontal=True,
-                key="work_style_input",
-            )
-            in_domains = st.multiselect(
-                "Desired Industry Domains",
-                [
-                    "Artificial Intelligence & ML",
-                    "Enterprise Cloud & DevOps",
-                    "Full-Stack Web Engineering",
-                    "Information Security & Defense",
-                    "Interactive Gaming & Graphics",
-                    "Digital Product Design (UX/UI)",
-                    "Fintech & Data Analytics",
-                    "Automated Manufacturing & Robotics",
-                ],
-                default=st.session_state.get("domains_input", ["Artificial Intelligence & ML", "Enterprise Cloud & DevOps"]),
-                key="domains_input",
-            )
-
-        with adv_col2:
-            in_internship = st.toggle("Completed University / Industry Internship", value=st.session_state.get("intern_toggle", True), key="intern_toggle")
-            in_projects = st.number_input("Completed Technical Projects", min_value=0, max_value=20, value=st.session_state.get("projects_input", 3), key="projects_input")
-            in_certs = st.text_input("Existing Certifications (comma separated)", value=st.session_state.get("certs_input", "AWS Cloud Practitioner"), key="certs_input")
-
-    # 9. Primary Call to Action Section
+    # 7. Primary Call to Action Section
     completeness = 20
     if in_gpa > 0:
         completeness += 15
@@ -2971,16 +2922,19 @@ elif current_tab == "② Career Roadmap":
         matched_s = top_rec.get("matched_soft_skills", [])
         missing_s = top_rec.get("missing_soft_skills", [])
 
+        matched_badges = "".join([f"<span class='pf-badge pf-badge-blue'>✓ {s}</span>" for s in matched_s])
+        missing_badges = "".join([f"<span class='pf-badge pf-badge-high'>⚠ Missing: {s}</span>" for s in missing_s])
+        all_badges = matched_badges + missing_badges
+        if not all_badges:
+            all_badges = "<span style='color: #94A3B8; font-size: 0.9rem;'>No archetype-specific soft skill requirements listed.</span>"
+
         st.markdown(
-            f"""
-            <div class="pf-card">
-                <div class="pf-card-title">🧩 Soft Skill Archetype Match Breakdown ({top_rec.get('archetype', '')})</div>
-                <div style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.55rem;">
-                    {''.join([f"<span class='pf-badge pf-badge-blue'>✓ {s}</span>" for s in matched_s])}
-                    {''.join([f"<span class='pf-badge pf-badge-high'>⚠ Missing: {s}</span>" for s in missing_s])}
-                </div>
-            </div>
-            """,
+            f"<div class='pf-card'>"
+            f"<div class='pf-card-title'>🧩 Soft Skill Archetype Match Breakdown ({top_rec.get('archetype', '')})</div>"
+            f"<div style='margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.55rem;'>"
+            f"{all_badges}"
+            f"</div>"
+            f"</div>",
             unsafe_allow_html=True,
         )
 
@@ -3002,17 +2956,15 @@ elif current_tab == "② Career Roadmap":
             if gaps:
                 for g in gaps:
                     st.markdown(
-                        f"""
-                        <div style="background: rgba(14, 23, 44, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 0.95rem 1.2rem; margin-bottom: 0.7rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: clamp(0.9rem, 1vw, 1.1rem); font-weight: 600; color: #F8FAFC;">{g['skill_name']}</div>
-                                <div style="font-size: clamp(0.78rem, 0.85vw, 0.92rem); color: #94A3B8; margin-top: 0.2rem;">
-                                    Current: <b style="color: #CBD5E1;">{g['current']}</b> • Target Requisite: <b style="color: #38BDF8;">{g['target']}</b>
-                                </div>
-                            </div>
-                            <span class="pf-badge {g['badge_class']}">{g['urgency']}</span>
-                        </div>
-                        """,
+                        f"<div style='background: rgba(14, 23, 44, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 0.95rem 1.2rem; margin-bottom: 0.7rem; display: flex; justify-content: space-between; align-items: center;'>"
+                        f"<div>"
+                        f"<div style='font-size: clamp(0.9rem, 1vw, 1.1rem); font-weight: 600; color: #F8FAFC;'>{g['skill_name']}</div>"
+                        f"<div style='font-size: clamp(0.78rem, 0.85vw, 0.92rem); color: #94A3B8; margin-top: 0.2rem;'>"
+                        f"Current: <b style='color: #CBD5E1;'>{g['current']}</b> • Target Requisite: <b style='color: #38BDF8;'>{g['target']}</b>"
+                        f"</div>"
+                        f"</div>"
+                        f"<span class='pf-badge {g['badge_class']}'>{g['urgency']}</span>"
+                        f"</div>",
                         unsafe_allow_html=True,
                     )
             else:
