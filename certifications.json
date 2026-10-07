@@ -1,0 +1,363 @@
+[
+  {
+    "id": "meta-frontend",
+    "title": "Meta Front-End Developer Professional Certificate",
+    "issuer": "Coursera / Meta",
+    "level": "Beginner to Intermediate",
+    "target_years": ["1st Year", "2nd Year", "3rd Year"],
+    "domains": ["Software Engineering", "Web Development", "UI/UX Design"],
+    "skills": ["Modern Web Stack", "Software Engineering Principles", "Mobile Development"],
+    "skill_keys": ["WebStack", "SE_Principles", "MobileDev"],
+    "vector": {
+      "WebStack": 1.0,
+      "SE_Principles": 0.7,
+      "MobileDev": 0.5
+    },
+    "description": "Master React, JavaScript ES6+, HTML5/CSS3, responsive UI frameworks, and production-grade web application architecture.",
+    "official_url": "https://www.coursera.org/professional-certificates/meta-front-end-developer",
+    "prep_url": "https://www.metacareers.com/career-programs/certificates",
+    "exam_guide_url": "https://www.metacareers.com/career-programs/certificates"
+  },
+  {
+    "id": "aws-dev-assoc",
+    "title": "AWS Certified Developer – Associate (DVA-C02)",
+    "issuer": "Amazon Web Services",
+    "level": "Intermediate",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Software Engineering", "Cloud & DevOps", "Web Development"],
+    "skills": ["Modern Web Stack", "Cloud Architecture & Docker", "Software Engineering Principles"],
+    "skill_keys": ["WebStack", "CloudDocker", "SE_Principles"],
+    "vector": {
+      "CloudDocker": 1.0,
+      "WebStack": 0.85,
+      "SE_Principles": 0.75
+    },
+    "description": "Validates cloud-native application development, serverless AWS Lambda, DynamoDB, API Gateways, container deployment, and CI/CD pipelines.",
+    "official_url": "https://aws.amazon.com/certification/certified-developer-associate/",
+    "prep_url": "https://aws.amazon.com/training/digital/",
+    "exam_guide_url": "https://d1.awsstatic.com/training-and-certification/docs-dev-associate/AWS-Certified-Developer-Associate_Exam-Guide.pdf"
+  },
+  {
+    "id": "meta-backend",
+    "title": "Meta Back-End Developer Professional Certificate",
+    "issuer": "Coursera / Meta",
+    "level": "Intermediate",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Software Engineering", "Web Development", "Cloud & DevOps"],
+    "skills": ["Modern Web Stack", "Python Programming", "SQL & Relational Querying", "Database Management Systems"],
+    "skill_keys": ["WebStack", "Python", "SQL", "DBMS"],
+    "vector": {
+      "WebStack": 0.95,
+      "Python": 0.9,
+      "SQL": 0.85,
+      "DBMS": 0.8
+    },
+    "description": "Comprehensive back-end APIs, Django, REST microservices, relational database modeling, Linux servers, and cloud containerization.",
+    "official_url": "https://www.coursera.org/professional-certificates/meta-back-end-developer",
+    "prep_url": "https://www.coursera.org/professional-certificates/meta-back-end-developer",
+    "exam_guide_url": "https://www.metacareers.com/career-programs/certificates"
+  },
+  {
+    "id": "fcc-fullstack",
+    "title": "freeCodeCamp Full-Stack Developer Path",
+    "issuer": "freeCodeCamp",
+    "level": "Beginner to Intermediate",
+    "target_years": ["1st Year", "2nd Year", "3rd Year"],
+    "domains": ["Software Engineering", "Web Development"],
+    "skills": ["Modern Web Stack", "Data Structures & Algorithms", "SQL & Relational Querying"],
+    "skill_keys": ["WebStack", "DSA", "SQL"],
+    "vector": {
+      "WebStack": 1.0,
+      "DSA": 0.75,
+      "SQL": 0.65
+    },
+    "description": "300+ hours of verified project-based builds in Responsive Web Design, JavaScript Algorithms, Front-End Libraries, and Node.js APIs.",
+    "official_url": "https://www.freecodecamp.org/learn/",
+    "prep_url": "https://www.freecodecamp.org/learn/",
+    "exam_guide_url": "https://www.freecodecamp.org/learn/"
+  },
+  {
+    "id": "oracle-java-assoc",
+    "title": "Oracle Certified Associate: Java SE Programmer (1Z0-808)",
+    "issuer": "Oracle Corporation",
+    "level": "Intermediate",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Software Engineering", "Core Systems"],
+    "skills": ["Java / C++ Systems", "Object-Oriented Programming", "Data Structures & Algorithms"],
+    "skill_keys": ["Java_CPP", "OOP", "DSA"],
+    "vector": {
+      "Java_CPP": 1.0,
+      "OOP": 0.95,
+      "DSA": 0.75
+    },
+    "description": "Validates rigorous core Java programming, object-oriented encapsulation, exception handling, collections, and algorithmic fluency.",
+    "official_url": "https://education.oracle.com/oracle-certified-associate-java-se-8-programmer/trackp_333",
+    "prep_url": "https://mylearn.oracle.com/ou/learning-path/java-explorer/79708",
+    "exam_guide_url": "https://education.oracle.com/java-se-8-programmer-i/pexam_1Z0-808"
+  },
+  {
+    "id": "aws-solutions-architect",
+    "title": "AWS Certified Solutions Architect – Associate (SAA-C03)",
+    "issuer": "Amazon Web Services",
+    "level": "Intermediate to Advanced",
+    "target_years": ["3rd Year", "4th Year"],
+    "domains": ["Cloud & DevOps", "Infrastructure & Networking", "Software Engineering", "Cybersecurity & Defense"],
+    "skills": ["Cloud Architecture & Docker", "OS & Computer Networks", "Cybersecurity Defense", "Software Engineering Principles"],
+    "skill_keys": ["CloudDocker", "OS_Networks", "Cybersecurity", "SE_Principles"],
+    "vector": {
+      "CloudDocker": 1.0,
+      "OS_Networks": 0.85,
+      "Cybersecurity": 0.65,
+      "SE_Principles": 0.65
+    },
+    "description": "Industry benchmark for designing resilient, high-performing, cost-optimized, and secure multi-tier distributed cloud architectures.",
+    "official_url": "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
+    "prep_url": "https://aws.amazon.com/training/digital/",
+    "exam_guide_url": "https://d1.awsstatic.com/training-and-certification/docs-sa-assoc/AWS-Certified-Solutions-Architect-Associate_Exam-Guide.pdf"
+  },
+  {
+    "id": "aws-cloud-practitioner",
+    "title": "AWS Certified Cloud Practitioner (CLF-C02)",
+    "issuer": "Amazon Web Services",
+    "level": "Foundational",
+    "target_years": ["1st Year", "2nd Year"],
+    "domains": ["Cloud & DevOps", "Software Engineering", "Infrastructure & Networking"],
+    "skills": ["Cloud Architecture & Docker", "OS & Computer Networks"],
+    "skill_keys": ["CloudDocker", "OS_Networks"],
+    "vector": {
+      "CloudDocker": 0.85,
+      "OS_Networks": 0.55
+    },
+    "description": "Foundational understanding of high-level AWS cloud concepts, security models, core compute services, and billing fundamentals.",
+    "official_url": "https://aws.amazon.com/certification/certified-cloud-practitioner/",
+    "prep_url": "https://aws.amazon.com/training/digital/",
+    "exam_guide_url": "https://d1.awsstatic.com/training-and-certification/docs-cloud-practitioner/AWS-Certified-Cloud-Practitioner_Exam-Guide.pdf"
+  },
+  {
+    "id": "gcp-data-engineer",
+    "title": "Google Cloud Professional Data Engineer",
+    "issuer": "Google Cloud",
+    "level": "Professional",
+    "target_years": ["3rd Year", "4th Year"],
+    "domains": ["Data & Analytics", "Artificial Intelligence", "Database & Big Data", "Cloud & DevOps"],
+    "skills": ["SQL & Relational Querying", "Cloud Architecture & Docker", "Python Programming", "Machine Learning & AI", "Database Management Systems"],
+    "skill_keys": ["SQL", "CloudDocker", "Python", "ML_AI", "DBMS"],
+    "vector": {
+      "SQL": 1.0,
+      "CloudDocker": 0.85,
+      "Python": 0.75,
+      "ML_AI": 0.75,
+      "DBMS": 0.85
+    },
+    "description": "Validates data processing systems, BigQuery analytics, Dataflow pipelines, Pub/Sub event streams, and scalable warehousing.",
+    "official_url": "https://cloud.google.com/learn/certification/data-engineer",
+    "prep_url": "https://www.cloudskillsboost.google/paths/16",
+    "exam_guide_url": "https://cloud.google.com/learn/certification/guides/data-engineer"
+  },
+  {
+    "id": "google-data-analytics",
+    "title": "Google Data Analytics Professional Certificate",
+    "issuer": "Coursera / Google",
+    "level": "Beginner to Intermediate",
+    "target_years": ["1st Year", "2nd Year", "3rd Year"],
+    "domains": ["Data & Analytics", "Agile & Project Management"],
+    "skills": ["SQL & Relational Querying", "Database Management Systems", "Mathematics & Statistics"],
+    "skill_keys": ["SQL", "DBMS", "Math_Stats"],
+    "vector": {
+      "SQL": 1.0,
+      "DBMS": 0.85,
+      "Math_Stats": 0.75
+    },
+    "description": "Covers practical data wrangling, SQL calculations, Tableau visual storytelling, and statistical analysis for executive decision-making.",
+    "official_url": "https://www.coursera.org/professional-certificates/google-data-analytics",
+    "prep_url": "https://grow.google/certificates/data-analytics/",
+    "exam_guide_url": "https://grow.google/certificates/data-analytics/"
+  },
+  {
+    "id": "tf-dev-cert",
+    "title": "TensorFlow Developer Certificate",
+    "issuer": "DeepLearning.AI / Google",
+    "level": "Intermediate to Advanced",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Artificial Intelligence", "Data & Analytics", "Software Engineering"],
+    "skills": ["Machine Learning & AI", "Python Programming", "Mathematics & Statistics"],
+    "skill_keys": ["ML_AI", "Python", "Math_Stats"],
+    "vector": {
+      "ML_AI": 1.0,
+      "Python": 0.95,
+      "Math_Stats": 0.75
+    },
+    "description": "Validates practical deep learning architectures, CNNs, NLP sequence models, model optimization, and production inference.",
+    "official_url": "https://www.deeplearning.ai/courses/tensorflow-developer-professional-certificate/",
+    "prep_url": "https://www.tensorflow.org/certificate",
+    "exam_guide_url": "https://www.tensorflow.org/extras/surveys/candidate_handbook.pdf"
+  },
+  {
+    "id": "ibm-ai-engineer",
+    "title": "IBM AI Engineering Professional Certificate",
+    "issuer": "edX / IBM",
+    "level": "Intermediate",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Artificial Intelligence", "Data & Analytics"],
+    "skills": ["Machine Learning & AI", "Python Programming", "Mathematics & Statistics"],
+    "skill_keys": ["ML_AI", "Python", "Math_Stats"],
+    "vector": {
+      "ML_AI": 1.0,
+      "Python": 0.85,
+      "Math_Stats": 0.8
+    },
+    "description": "Comprehensive PyTorch, Scikit-Learn, computer vision, natural language transformers, and neural networks on edX.",
+    "official_url": "https://www.edx.org/certificates/professional-certificate/ibm-ai-engineering",
+    "prep_url": "https://www.edx.org/certificates/professional-certificate/ibm-ai-engineering",
+    "exam_guide_url": "https://www.ibm.com/training/badge/ai-engineer"
+  },
+  {
+    "id": "databricks-assoc-spark",
+    "title": "Databricks Certified Associate Developer for Apache Spark",
+    "issuer": "Databricks",
+    "level": "Intermediate",
+    "target_years": ["3rd Year", "4th Year"],
+    "domains": ["Data & Analytics", "Database & Big Data", "Software Engineering"],
+    "skills": ["Python Programming", "SQL & Relational Querying", "Database Management Systems"],
+    "skill_keys": ["Python", "SQL", "DBMS"],
+    "vector": {
+      "Python": 0.9,
+      "SQL": 0.9,
+      "DBMS": 0.85
+    },
+    "description": "Assesses deep understanding of the Spark architecture, distributed partitions, and DataFrame manipulation at scale.",
+    "official_url": "https://www.databricks.com/learn/certification/spark-developer-associate",
+    "prep_url": "https://academy.databricks.com/",
+    "exam_guide_url": "https://www.databricks.com/sites/default/files/2023-01/Databricks-Certified-Associate-Developer-for-Apache-Spark-3.0-Exam-Guide.pdf"
+  },
+  {
+    "id": "cka-kubernetes",
+    "title": "Certified Kubernetes Administrator (CKA)",
+    "issuer": "The Linux Foundation / CNCF",
+    "level": "Advanced",
+    "target_years": ["3rd Year", "4th Year"],
+    "domains": ["Cloud & DevOps", "Infrastructure & Networking", "Software Engineering"],
+    "skills": ["Cloud Architecture & Docker", "OS & Computer Networks", "Cybersecurity Defense"],
+    "skill_keys": ["CloudDocker", "OS_Networks", "Cybersecurity"],
+    "vector": {
+      "CloudDocker": 1.0,
+      "OS_Networks": 0.85,
+      "Cybersecurity": 0.65
+    },
+    "description": "Rigorous hands-on performance exam demonstrating mastery in Kubernetes cluster setup, overlay networking, storage, and pod scaling.",
+    "official_url": "https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/",
+    "prep_url": "https://training.linuxfoundation.org/training/kubernetes-fundamentals/",
+    "exam_guide_url": "https://docs.linuxfoundation.org/tc-docs/certification/important-instructions-cka-ckad"
+  },
+  {
+    "id": "comptia-sec-plus",
+    "title": "CompTIA Security+ (SY0-701)",
+    "issuer": "CompTIA",
+    "level": "Intermediate",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Cybersecurity & Defense", "Infrastructure & Networking"],
+    "skills": ["Cybersecurity Defense", "OS & Computer Networks"],
+    "skill_keys": ["Cybersecurity", "OS_Networks"],
+    "vector": {
+      "Cybersecurity": 1.0,
+      "OS_Networks": 0.85
+    },
+    "description": "Global benchmark in enterprise cyber posture, cryptography, incident response, network auditing, and zero trust architectures.",
+    "official_url": "https://www.comptia.org/certifications/security",
+    "prep_url": "https://www.comptia.org/training/certmaster-learn/security",
+    "exam_guide_url": "https://www.comptia.org/training/resources/exam-objectives"
+  },
+  {
+    "id": "cisco-ccna",
+    "title": "Cisco Certified Network Associate (CCNA 200-301)",
+    "issuer": "Cisco",
+    "level": "Associate",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Infrastructure & Networking", "Cybersecurity & Defense", "Cloud & DevOps"],
+    "skills": ["OS & Computer Networks", "Cybersecurity Defense", "Cloud Architecture & Docker"],
+    "skill_keys": ["OS_Networks", "Cybersecurity", "CloudDocker"],
+    "vector": {
+      "OS_Networks": 1.0,
+      "Cybersecurity": 0.65,
+      "CloudDocker": 0.5
+    },
+    "description": "Validates foundational networking, IP routing protocols, security fundamentals, Cisco IOS configurations, and network automation.",
+    "official_url": "https://www.cisco.com/c/en/us/training-events/training-certifications/certifications/associate/ccna.html",
+    "prep_url": "https://learningnetwork.cisco.com/s/ccna",
+    "exam_guide_url": "https://learningcontent.cisco.com/documents/marketing/exam-topics/200-301-CCNA.pdf"
+  },
+  {
+    "id": "pmi-csm",
+    "title": "Certified ScrumMaster (CSM) / PMI-ACP",
+    "issuer": "Scrum Alliance / PMI",
+    "level": "Beginner to Intermediate",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["Agile & Project Management", "Management & Consulting"],
+    "skills": ["Software Engineering Principles", "Database Management Systems"],
+    "skill_keys": ["SE_Principles", "DBMS"],
+    "vector": {
+      "SE_Principles": 1.0,
+      "DBMS": 0.4
+    },
+    "description": "Demonstrates practical Agile iteration workflows, sprint backlogs, team facilitation, and Scrum project governance.",
+    "official_url": "https://www.scrumalliance.org/get-certified/scrum-master-track/certified-scrummaster",
+    "prep_url": "https://www.pmi.org/certifications/agile-acp",
+    "exam_guide_url": "https://www.scrumalliance.org/certifications/csm-certification"
+  },
+  {
+    "id": "unity-programmer",
+    "title": "Unity Certified Professional: Programmer",
+    "issuer": "Unity Technologies",
+    "level": "Intermediate to Advanced",
+    "target_years": ["3rd Year", "4th Year"],
+    "domains": ["Game Development & Graphics", "C++ & Systems", "Software Engineering"],
+    "skills": ["Java / C++ Systems", "Mathematics & Statistics", "Object-Oriented Programming"],
+    "skill_keys": ["Java_CPP", "Math_Stats", "OOP"],
+    "vector": {
+      "Java_CPP": 1.0,
+      "Math_Stats": 0.85,
+      "OOP": 0.75
+    },
+    "description": "Certifies core real-time 3D game physics, custom shaders, gameplay scripting, memory management, and Unity profiler tuning.",
+    "official_url": "https://unity.com/products/unity-certifications/professional-programmer",
+    "prep_url": "https://learn.unity.com/",
+    "exam_guide_url": "https://unity.com/products/unity-certifications"
+  },
+  {
+    "id": "autodesk-inventor",
+    "title": "Autodesk Certified Professional (AutoCAD / Inventor)",
+    "issuer": "Autodesk",
+    "level": "Intermediate to Advanced",
+    "target_years": ["2nd Year", "3rd Year", "4th Year"],
+    "domains": ["CAD/CAM & Mechanical", "Engineering Architecture"],
+    "skills": ["Mathematics & Statistics", "Software Engineering Principles"],
+    "skill_keys": ["Math_Stats", "SE_Principles"],
+    "vector": {
+      "Math_Stats": 1.0,
+      "SE_Principles": 0.65
+    },
+    "description": "Industry benchmark for parametric solid modeling, finite element analysis, 3D assembly drafting, and CNC manufacturing workflows.",
+    "official_url": "https://www.autodesk.com/certification/all-certifications",
+    "prep_url": "https://www.autodesk.com/certification/learn",
+    "exam_guide_url": "https://www.autodesk.com/certification/all-certifications"
+  },
+  {
+    "id": "google-ux-cert",
+    "title": "Google UX Design Professional Certificate",
+    "issuer": "Coursera / Google",
+    "level": "Beginner to Intermediate",
+    "target_years": ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+    "domains": ["UI/UX Design", "Web Development", "Product & Media"],
+    "skills": ["Modern Web Stack", "Software Engineering Principles", "Mobile Development"],
+    "skill_keys": ["WebStack", "SE_Principles", "MobileDev"],
+    "vector": {
+      "WebStack": 0.85,
+      "SE_Principles": 0.75,
+      "MobileDev": 0.65
+    },
+    "description": "End-to-end user experience design, rapid Figma prototyping, accessibility heuristics, persona modeling, and usability trials.",
+    "official_url": "https://www.coursera.org/professional-certificates/google-ux-design",
+    "prep_url": "https://grow.google/certificates/ux-design/",
+    "exam_guide_url": "https://grow.google/certificates/ux-design/"
+  }
+]

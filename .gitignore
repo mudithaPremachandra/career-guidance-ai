@@ -1,0 +1,42 @@
+﻿# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+.env.local
+.env.*
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Configs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build & Package artifacts
+build/
+dist/
+*.egg-info/
+
+# Session handover (local scratch, not a deliverable)
+session_handover_summary.md
+session-handover-summaries/
+
+# Streamlit secrets (API keys) must never be committed
+.streamlit/secrets.toml

@@ -1,0 +1,72 @@
+{
+  "_schema": {
+    "about": "Knowledge base for Engine A (rule-based reasoning). Loaded by load_rule_base() in app.py.",
+    "rule": "{id, if, points, text, exclusive_group?} - fires when the 'if' condition holds and adds 'points'.",
+    "exclusive_group": "Within a group only the first matching rule fires (IF / ELSE IF chain).",
+    "conditions": {
+      "always": "{\"always\": true}",
+      "profile field": "{\"profile\": \"gpa\" | \"projects_count\" | \"has_internship\", <op>: value}",
+      "skill": "{\"skill\": \"DSA\", <op>: value} - core modules are 0-100, technical skills are 1-5",
+      "elective": "{\"elective\": \"Cloud Computing\"} - true when the elective was taken",
+      "combinators": "{\"all\": [conditions]} or {\"any\": [conditions]}",
+      "operators": "gte, gt, lte, lt, eq"
+    }
+  },
+  "max_points": 100,
+  "common_rules": [
+    {"id": "R-GPA-HIGH", "exclusive_group": "gpa", "if": {"profile": "gpa", "gte": 3.5}, "points": 15, "text": "Exceptional academic standing GPA >= 3.5"},
+    {"id": "R-GPA-MED", "exclusive_group": "gpa", "if": {"profile": "gpa", "gte": 3.0}, "points": 10, "text": "Strong academic standing GPA >= 3.0"},
+    {"id": "R-GPA-BASE", "exclusive_group": "gpa", "if": {"always": true}, "points": 5, "text": "Foundation academic standing"},
+    {"id": "R-EXP-INTERN", "if": {"profile": "has_internship", "eq": true}, "points": 15, "text": "Completed industry/university internship"},
+    {"id": "R-EXP-PROJ", "if": {"profile": "projects_count", "gte": 3}, "points": 10, "text": "Robust technical project portfolio >= 3"}
+  ],
+  "career_rules": {
+    "Software Engineer": [
+      {"id": "R-SE-CORE", "if": {"all": [{"skill": "DSA", "gte": 75}, {"skill": "OOP", "gte": 75}]}, "points": 25, "text": "High DSA & OOP core competency verified"},
+      {"id": "R-SE-ENG", "if": {"skill": "SE_Principles", "gte": 75}, "points": 15, "text": "Software Engineering architecture principles verified"}
+    ],
+    "Data Scientist": [
+      {"id": "R-DS-MATH", "if": {"all": [{"skill": "Math_Stats", "gte": 80}, {"skill": "DBMS", "gte": 75}]}, "points": 25, "text": "Advanced statistics and relational data foundations"},
+      {"id": "R-DS-TOOL", "if": {"all": [{"skill": "Python", "gte": 4}, {"skill": "SQL", "gte": 4}]}, "points": 15, "text": "High Python data science and SQL query proficiency"},
+      {"id": "R-DS-ELEC", "if": {"elective": "Data Mining & Big Data"}, "points": 10, "text": "Specialized elective 'Data Mining & Big Data' completed"}
+    ],
+    "AI Engineer": [
+      {"id": "R-AI-MATH", "if": {"all": [{"skill": "Math_Stats", "gte": 80}, {"skill": "DSA", "gte": 80}]}, "points": 20, "text": "Advanced algorithmic and mathematical foundations"},
+      {"id": "R-AI-FRAMEWORK", "if": {"all": [{"skill": "ML_AI", "gte": 4}, {"skill": "Python", "gte": 4}]}, "points": 20, "text": "Deep learning and PyTorch/TensorFlow expertise"},
+      {"id": "R-AI-ELEC", "if": {"elective": "AI & Machine Learning"}, "points": 10, "text": "Specialized elective 'AI & Machine Learning' completed"}
+    ],
+    "Cloud Architect": [
+      {"id": "R-CLOUD-NET", "if": {"all": [{"skill": "OS_Networks", "gte": 80}, {"skill": "CloudDocker", "gte": 3}]}, "points": 25, "text": "Strong OS networking, Linux, and containerization"},
+      {"id": "R-CLOUD-ELEC", "if": {"elective": "Cloud Computing"}, "points": 15, "text": "Specialized elective 'Cloud Computing' completed"}
+    ],
+    "UX Designer": [
+      {"id": "R-UX-HCI", "if": {"any": [{"elective": "Human-Computer Interaction (UI/UX)"}, {"skill": "WebStack", "gte": 3}]}, "points": 30, "text": "HCI / UI Design coursework or front-end mastery"}
+    ],
+    "IT Business Analyst": [
+      {"id": "R-BA-PM", "if": {"any": [{"elective": "IT Project Management"}, {"skill": "SE_Principles", "gte": 80}]}, "points": 30, "text": "Agile PM coursework or strong SE process modeling"},
+      {"id": "R-BA-DATA", "if": {"all": [{"skill": "SQL", "gte": 3}, {"skill": "DBMS", "gte": 70}]}, "points": 15, "text": "Business data querying and requirements modeling"}
+    ],
+    "Game Developer": [
+      {"id": "R-GAME-ELEC", "if": {"any": [{"elective": "Game Engine Development"}, {"elective": "Computer Graphics & Animation"}]}, "points": 30, "text": "Specialized graphics or game engine electives"},
+      {"id": "R-GAME-CPP", "if": {"all": [{"skill": "Java_CPP", "gte": 4}, {"skill": "DSA", "gte": 75}]}, "points": 15, "text": "Robust C++ systems programming and real-time data structures"}
+    ],
+    "CAD-CAM Engineer": [
+      {"id": "R-CAD-ELEC", "if": {"elective": "CAD/CAM Principles"}, "points": 30, "text": "Specialized elective 'CAD/CAM Principles' verified"},
+      {"id": "R-CAD-MATH", "if": {"all": [{"skill": "Math_Stats", "gte": 75}, {"skill": "SE_Principles", "gte": 70}]}, "points": 15, "text": "Strong computational geometry and engineering principles"}
+    ],
+    "Cybersecurity Specialist": [
+      {"id": "R-SEC-CORE", "if": {"any": [{"elective": "Network Security & Cyber Defense"}, {"skill": "Cybersecurity", "gte": 4}]}, "points": 30, "text": "Cyber defense specialization or high technical security score"},
+      {"id": "R-SEC-NET", "if": {"skill": "OS_Networks", "gte": 80}, "points": 15, "text": "Advanced mastery of TCP/IP, OSI protocols, and OS internals"}
+    ]
+  },
+  "soft_skill_rule": {
+    "id": "R-SOFT-SKILLS",
+    "about": "Adds (matched / required soft skills) x weight_bonus x 100 points. weight_bonus comes from the career in CAREER_UNIVERSE.",
+    "default_weight_bonus": 0.20
+  },
+  "work_style_rule": {
+    "id": "R-STYLE-MATCH",
+    "about": "Fires when the student's work style is one of the career's target_workstyles.",
+    "points": 5
+  }
+}
