@@ -6,7 +6,7 @@ and cycles light-hearted messages so a slow step (usually the Gemini call) never
 import html
 import random
 from contextlib import contextmanager
-from typing import Callable, Iterator
+from typing import Callable, Iterator, Optional
 
 import streamlit as st
 
@@ -47,6 +47,7 @@ OVERLAY_CSS = """
     letter-spacing: 0.08em; text-transform: uppercase; color: #38BDF8;
 }
 .pf-loading-stage { font-size: 1.05rem; font-weight: 700; color: #F8FAFC; margin: 0.35rem 0 1rem 0; }
+.pf-loading-subtitle { font-size: 0.85rem; color: #CBD5E1; line-height: 1.45; margin: -0.6rem 0 1rem 0; }
 .pf-loading-quips { position: relative; height: 1.4rem; font-size: 0.88rem; color: #94A3B8; font-style: italic; }
 .pf-loading-quips span {
     position: absolute; left: 0; right: 0; opacity: 0;
@@ -71,7 +72,7 @@ OVERLAY_CSS = (
 )
 
 
-def overlay_html(step: int, total: int, stage: str) -> str:
+def overlay_html(stage: str, step: Optional[int] = None, total: Optional[int] = None, subtitle: str = "") -> str:
     """Overlay markup. Messages are shuffled each render so a stage change doesn't always restart on the same one."""
     quips = random.sample(QUIRKY_MESSAGES, len(QUIRKY_MESSAGES))
     cycle = SECONDS_PER_MESSAGE * len(quips)
@@ -79,11 +80,14 @@ def overlay_html(step: int, total: int, stage: str) -> str:
         f'<span style="animation-duration: {cycle}s; animation-delay: {i * SECONDS_PER_MESSAGE}s;">{html.escape(q)}</span>'
         for i, q in enumerate(quips)
     )
+    step_html = f'<div class="pf-loading-step">Step {step} of {total}</div>' if step else ""
+    subtitle_html = f'<div class="pf-loading-subtitle">{html.escape(subtitle)}</div>' if subtitle else ""
     return (
         f'{OVERLAY_CSS}<div class="pf-loading-overlay"><div class="pf-loading-box">'
         f'<div class="pf-loading-spinner"></div>'
-        f'<div class="pf-loading-step">Step {step} of {total}</div>'
+        f'{step_html}'
         f'<div class="pf-loading-stage">{html.escape(stage)}</div>'
+        f'{subtitle_html}'
         f'<div class="pf-loading-quips">{spans}</div>'
         f"</div></div>"
     )
@@ -99,9 +103,18 @@ class LoadingOverlay:
     def show(self, total_steps: int) -> Iterator[Callable[[int, str], None]]:
         """Yields `stage(step, text)`; the overlay is removed when the block exits, even on an error."""
         def stage(step: int, text: str) -> None:
-            self.slot.markdown(overlay_html(step, total_steps, text), unsafe_allow_html=True)
+            self.slot.markdown(overlay_html(text, step, total_steps), unsafe_allow_html=True)
 
         try:
             yield stage
+        finally:
+            self.slot.empty()
+
+    @contextmanager
+    def message(self, title: str, subtitle: str = "") -> Iterator[None]:
+        """One title for the whole block, without a step counter (e.g. app startup)."""
+        self.slot.markdown(overlay_html(title, subtitle=subtitle), unsafe_allow_html=True)
+        try:
+            yield
         finally:
             self.slot.empty()

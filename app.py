@@ -306,6 +306,23 @@ st.markdown(
         transform: translateY(-2px) !important;
     }
 
+    /* Secondary buttons: quiet glass style so the primary next-step button stands out */
+    div.stButton > button[kind="secondary"],
+    div.stButton > button[data-testid="stBaseButton-secondary"] {
+        background: rgba(15, 23, 42, 0.75) !important;
+        color: #CBD5E1 !important;
+        border: 1px solid rgba(56, 189, 248, 0.28) !important;
+        box-shadow: none !important;
+        text-shadow: none;
+    }
+    div.stButton > button[kind="secondary"]:hover,
+    div.stButton > button[data-testid="stBaseButton-secondary"]:hover {
+        background: rgba(15, 23, 42, 0.95) !important;
+        color: #00F0FF !important;
+        border-color: #00F0FF !important;
+        box-shadow: 0 0 16px rgba(0, 240, 255, 0.2) !important;
+    }
+
     /* Streamlit Widget Label Visibility Overrides */
     label[data-testid="stWidgetLabel"] p {
         color: #E2E8F0 !important;
@@ -381,6 +398,63 @@ st.markdown(
     }
     ::-webkit-scrollbar-thumb:hover {
         background: #00F0FF;
+    }
+
+    /* Badge rows: whole badges move to the next line instead of their text wrapping inside the pill */
+    .pf-badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .pf-badge-row .pf-badge, .pf-nowrap {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Profile Snapshot cards (label, value, progress bar, note stacked so nothing competes for one line) */
+    .pf-snapshot-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(13, 20, 36, 0.85) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 14px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.6rem;
+    }
+    .pf-snapshot-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #E2E8F0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .pf-snapshot-value {
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-top: 0.2rem;
+        white-space: nowrap;
+    }
+    .pf-progress-track {
+        width: 100%;
+        height: 8px;
+        background: rgba(30, 41, 59, 0.8);
+        border-radius: 9999px;
+        overflow: hidden;
+        margin: 0.5rem 0 0.55rem 0;
+    }
+    .pf-progress-fill {
+        height: 100%;
+        border-radius: 9999px;
+    }
+    .pf-snapshot-note {
+        font-size: 0.78rem;
+        color: #94A3B8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Hide Streamlit's toolbar and running indicator: the loading overlay shows progress instead */
@@ -546,16 +620,13 @@ if "evaluation_data" not in st.session_state:
         projects_count=3,
         existing_certs="AWS Cloud Practitioner",
     )
-    with loading.show(ANALYSIS_STEPS) as stage:
-        stage(1, f"Warming up: scoring a sample profile against {len(CAREER_UNIVERSE)} careers")
+    # Startup scores a built-in sample student (not the visitor), so no step-by-step "your roadmap" progress here
+    with loading.message("Loading PathFinder AI", "Preparing a sample roadmap so you can explore the results right away."):
         def_res = run_hybrid_inference(def_prof)
         def_top = def_res[0]
-        stage(2, "Explaining the top match with SHAP")
         def_sh = calculate_shap_contributions(def_prof, def_top["career"])
-        stage(3, "Finding skill gaps and matching certifications")
         def_gp = calculate_skill_gaps(def_prof, def_top["career"])
         def_rc = recommend_certifications(def_gp, target_career=def_top["career"], student_year=def_year, held_cert_ids=tuple(parse_held_certifications(def_prof.existing_certs)))
-        stage(4, ROADMAP_STAGE)
         def_gd = generate_guidance(def_prof, def_top, def_gp, def_rc)
     st.session_state["evaluation_data"] = {
         "profile": def_prof,
@@ -591,6 +662,19 @@ if st.session_state.pop("show_results", False):
 
 # on_change="rerun" makes the tabs track state, so the selected tab can be set through st.session_state["main_tabs"]
 tab1, tab2, tab3, tab4 = st.tabs(MAIN_TABS, key="main_tabs", on_change="rerun")
+PROFILE_TAB, STUDIO_TAB, HISTORY_TAB = MAIN_TABS[0], MAIN_TABS[2], MAIN_TABS[3]
+
+
+def go_to_tab(label: str) -> None:
+    """Button callback: callbacks run before the next script run, the only point where the tabs' state may be changed."""
+    st.session_state["main_tabs"] = label
+
+
+def bottom_nav(buttons: list) -> None:
+    """Row of (label, target tab, key, primary) navigation buttons at the bottom of a tab."""
+    st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 2rem 0 1.2rem 0;'>", unsafe_allow_html=True)
+    for col, (label, target, key, primary) in zip(st.columns(len(buttons)), buttons):
+        col.button(label, key=key, type="primary" if primary else "secondary", use_container_width=True, on_click=go_to_tab, args=(target,))
 
 
 # -----------------------------------------------------------------------------
@@ -882,6 +966,35 @@ with tab1:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # Profile Snapshot: live summary of the form above
+    avg_core = (m_dsa + m_oop + m_dbms + m_os + m_se + m_math) / 6.0
+    avg_tech = (t_python + t_jcpp + t_sql + t_web + t_cloud + t_ml + t_mob + t_sec) / 40.0 * 100.0
+    snapshots = [
+        ("💻 Technical Skills", f"{avg_tech:.0f}%", avg_tech, "#0284C7", "#00F0FF", "Average of 8 proficiencies"),
+        ("🎓 Academic Performance", f"{avg_core:.0f}%", avg_core, "#059669", "#34D399", f"GPA {in_gpa:.2f} • 6 core modules"),
+        ("🤝 Soft Skills", f"{len(selected_soft_skills)} active", min(100.0, len(selected_soft_skills) / 6.0 * 100.0), "#7C3AED", "#C084FC", "Across 4 pillars"),
+        ("🚀 Projects", f"{in_projects}", min(100.0, in_projects * 20.0), "#D97706", "#FBBF24", "Self-reported portfolio builds"),
+    ]
+    st.markdown(
+        "<p style='font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #38BDF8; margin: 1rem 0 0.6rem 0;'>📊 Your Profile Snapshot</p>",
+        unsafe_allow_html=True,
+    )
+    for snap_col, (label, value, pct, grad_from, grad_to, note) in zip(st.columns(4), snapshots):
+        with snap_col:
+            st.markdown(
+                f"""
+                <div class="pf-snapshot-card">
+                    <div class="pf-snapshot-label" title="{label}">{label}</div>
+                    <div class="pf-snapshot-value" style="color: {grad_to};">{value}</div>
+                    <div class="pf-progress-track">
+                        <div class="pf-progress-fill" style="width: {pct:.0f}%; background: linear-gradient(90deg, {grad_from}, {grad_to});"></div>
+                    </div>
+                    <div class="pf-snapshot-note" title="{note}">{note}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
     st.markdown("<br>", unsafe_allow_html=True)
     btn_submit = st.button("⚡ Run Multi-Engine Inference & Generate Cyber Roadmap", type="primary", use_container_width=True)
 
@@ -977,6 +1090,12 @@ with tab1:
         st.session_state["show_results"] = True
         st.rerun()
 
+    # Bottom Navigation for Tab 1
+    bottom_nav([
+        ("🔬 Explore Model Studio", STUDIO_TAB, "p_bot_studio", False),
+        ("📋 View Evaluation History", HISTORY_TAB, "p_bot_hist", False),
+        ("Next: View Career Roadmap →", RESULTS_TAB, "p_bot_next", True),
+    ])
 
 # -----------------------------------------------------------------------------
 # TAB 2: GUIDANCE & ROADMAP (RESULTS SCREEN & ARCHETYPE BREAKDOWN)
@@ -1015,7 +1134,7 @@ with tab2:
             st.markdown(
                 f"""
                 <div class="pf-hero-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="pf-badge-row">
                         <span class="pf-badge pf-badge-blue">Primary Match • Rank 1</span>
                         <span class="pf-badge pf-badge-purple">{top3[0].get('archetype', 'Archetype')}</span>
                     </div>
@@ -1044,7 +1163,7 @@ with tab2:
             st.markdown(
                 f"""
                 <div class="pf-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="pf-badge-row">
                         <span class="pf-badge pf-badge-purple">Alternative Path • Rank 2</span>
                         <span class="pf-badge pf-badge-slate">{top3[1].get('archetype', 'Archetype')}</span>
                     </div>
@@ -1073,7 +1192,7 @@ with tab2:
             st.markdown(
                 f"""
                 <div class="pf-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="pf-badge-row">
                         <span class="pf-badge pf-badge-med">Emerging Fit • Rank 3</span>
                         <span class="pf-badge pf-badge-slate">{top3[2].get('archetype', 'Archetype')}</span>
                     </div>
@@ -1098,15 +1217,12 @@ with tab2:
             )
 
         # Executive AI Summary Callout Box
+        # One line, and narrative newlines collapsed: a blank line inside (e.g. from Gemini) would end the HTML block
         st.markdown(
-            f"""
-            <div class="pf-callout">
-                <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #00F0FF; margin-bottom: 0.35rem; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase;">
-                    ⚡ AI Advisory Executive Summary
-                </div>
-                {narrative}
-            </div>
-            """,
+            f"<div class='pf-callout'>"
+            f"<div style=\"font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #00F0FF; margin-bottom: 0.35rem; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase;\">⚡ AI Advisory Executive Summary</div>"
+            f"{' '.join(narrative.split())}"
+            f"</div>",
             unsafe_allow_html=True,
         )
         if guidance and guidance.get("note"):
@@ -1307,16 +1423,18 @@ with tab2:
         matched_s = top_rec.get("matched_soft_skills", [])
         missing_s = top_rec.get("missing_soft_skills", [])
 
+        badges = "".join([f"<span class='pf-badge pf-badge-blue'>✓ {s}</span>" for s in matched_s])
+        badges += "".join([f"<span class='pf-badge pf-badge-high'>⚠ Missing: {s}</span>" for s in missing_s])
+        if not badges:
+            badges = "<span style='color: #94A3B8; font-size: 0.9rem;'>No archetype-specific soft skill requirements listed.</span>"
+
+        # Built as one line: an empty interpolation in an indented multi-line string leaves a blank line, which ends
+        # the HTML block in Markdown and prints the following indented </div> tags as a code block
         st.markdown(
-            f"""
-            <div class="pf-card">
-                <div class="pf-card-title">🧩 Soft Skill Archetype Match Breakdown ({top_rec.get('archetype', '')})</div>
-                <div style="margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    {''.join([f"<span class='pf-badge pf-badge-blue'>✓ {s}</span>" for s in matched_s])}
-                    {''.join([f"<span class='pf-badge pf-badge-high'>⚠ Missing: {s}</span>" for s in missing_s])}
-                </div>
-            </div>
-            """,
+            f"<div class='pf-card'>"
+            f"<div class='pf-card-title'>🧩 Soft Skill Archetype Match Breakdown ({top_rec.get('archetype', '')})</div>"
+            f"<div style='margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.5rem;'>{badges}</div>"
+            f"</div>",
             unsafe_allow_html=True,
         )
 
@@ -1341,14 +1459,14 @@ with tab2:
                 for g in gaps:
                     st.markdown(
                         f"""
-                        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
+                        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+                            <div style="min-width: 0;">
                                 <div style="font-size: 0.9rem; font-weight: 600; color: #F8FAFC;">{g['skill_name']}</div>
                                 <div style="font-size: 0.775rem; color: #94A3B8; margin-top: 0.15rem;">
                                     Current: <b style="color: #CBD5E1;">{g['current']}</b> • Target Requisite: <b style="color: #38BDF8;">{g['target']}</b>
                                 </div>
                             </div>
-                            <span class="pf-badge {g['badge_class']}">{g['urgency']}</span>
+                            <span class="pf-badge pf-nowrap {g['badge_class']}">{g['urgency']}</span>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -1362,12 +1480,16 @@ with tab2:
 
             for cert in certs:
                 with st.container(border=True):
-                    col_title, col_score = st.columns([3, 1])
-                    with col_title:
-                        st.markdown(f"**{cert['title']}**")
-                        st.caption(f"Issuer: {cert['issuer']} • Level: {cert['level']}")
-                    with col_score:
-                        st.markdown(f"`{cert['coverage_pct']}% Gap Coverage`")
+                    st.markdown(
+                        f"<div style='display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.6rem;'>"
+                        f"<div style='min-width: 0;'>"
+                        f"<div style='font-weight: 700; color: #F8FAFC;'>{html.escape(cert['title'])}</div>"
+                        f"<div style='font-size: 0.8rem; color: #94A3B8; margin-top: 0.2rem;'>Issuer: {html.escape(cert['issuer'])} • Level: {html.escape(cert['level'])}</div>"
+                        f"</div>"
+                        f"<span class='pf-badge pf-badge-low pf-nowrap'>{cert['coverage_pct']}% Gap Coverage</span>"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
 
                     st.write(cert['description'])
 
@@ -1380,9 +1502,9 @@ with tab2:
                     # Action Buttons
                     btn_col1, btn_col2 = st.columns(2)
                     with btn_col1:
-                        st.link_button("🌐 Official Exam & Syllabus", cert['official_url'], use_container_width=True)
+                        st.link_button("🌐 Exam & Syllabus", cert['official_url'], use_container_width=True, help="Official exam page and syllabus")
                     with btn_col2:
-                        st.link_button("🎓 Prepare on Course Platform", cert['prep_url'], use_container_width=True)
+                        st.link_button("🎓 Prep Course", cert['prep_url'], use_container_width=True, help="Prepare on the course platform")
 
         # 4. Personalized Learning Pathway (sequenced from gaps, recommended certs and career projects)
         if guidance and guidance.get("pathway"):
@@ -1407,12 +1529,18 @@ with tab2:
                             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 0.75rem 0.9rem; margin-bottom: 0.6rem;">
                                 <span class="pf-badge {kind_badges.get(s['kind'], 'pf-badge-slate')}">{html.escape(s['kind'])}</span>
                                 <div style="font-size: 0.88rem; font-weight: 600; color: #F8FAFC; margin-top: 0.45rem;">{html.escape(s['title'])}</div>
-                                <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.25rem; line-height: 1.45;">{html.escape(s['text'])}</div>
+                                <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.25rem; line-height: 1.45;">{html.escape(' '.join(s['text'].split()))}</div>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
 
+    # Bottom Navigation for Tab 2
+    bottom_nav([
+        ("← Back to Profile Intake", PROFILE_TAB, "r_bot_back", False),
+        ("🔬 Dataset & Model Studio →", STUDIO_TAB, "r_bot_studio", False),
+        ("📋 View Evaluation History →", HISTORY_TAB, "r_bot_hist", True),
+    ])
 
 # -----------------------------------------------------------------------------
 # TAB 3: DATASET & MODEL STUDIO (INPUT, UPLOAD, EXPLORE, TRAIN, PREDICT)
@@ -1654,6 +1782,12 @@ with tab3:
         )
         st.plotly_chart(fig_feat, use_container_width=True)
 
+    # Bottom Navigation for Tab 3
+    bottom_nav([
+        ("← Back to Career Roadmap", RESULTS_TAB, "s_bot_back", False),
+        ("👤 Edit Student Profile", PROFILE_TAB, "s_bot_prof", False),
+        ("📋 View Evaluation History →", HISTORY_TAB, "s_bot_next", True),
+    ])
 
 # -----------------------------------------------------------------------------
 # TAB 4: HISTORY LOG & ADVISOR VIEW
@@ -1721,3 +1855,9 @@ with tab4:
                 clear_all_records()
                 st.rerun()
 
+    # Bottom Navigation for Tab 4
+    bottom_nav([
+        ("← Back to Career Roadmap", RESULTS_TAB, "h_bot_back", False),
+        ("🔬 Open Model Studio", STUDIO_TAB, "h_bot_studio", False),
+        ("🚀 Start New Profile Intake →", PROFILE_TAB, "h_bot_new", True),
+    ])
