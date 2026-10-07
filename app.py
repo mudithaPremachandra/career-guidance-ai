@@ -14,15 +14,18 @@ A complete, standalone, high-tech cyber/AI Streamlit application integrating:
 10. Cosine-Similarity Industry Certification Recommender
 11. Dataset & Model Studio (Upload Custom CSV / Load Benchmark / Train Model / Feature Importances / Batch Predictions)
 12. Local SQLite persistence for history logging
+13. Personalized learning pathway + template NLG, with optional verified Gemini narration
 
 Theme: Futuristic High-Tech / Cyber AI / Glassmorphism
 """
 
 import datetime
+import html
 import io
 import json
 import math
 import os
+import re
 import sqlite3
 from typing import Any, Dict, List, Tuple
 
@@ -1780,29 +1783,31 @@ def calculate_shap_contributions(profile: StudentProfile, top_career: str, top_n
     return df
 
 
+# Long-form display names for benchmark skills, shared by skill gaps, narration and the learning pathway
+SKILL_LABELS = {
+    "DSA": "Data Structures & Algorithms",
+    "OOP": "Object-Oriented Programming",
+    "DBMS": "Database Management Systems",
+    "OS_Networks": "OS & Computer Networks",
+    "SE_Principles": "Software Engineering Principles",
+    "Math_Stats": "Mathematics & Statistics",
+    "Python": "Python Programming",
+    "Java_CPP": "Java / C++ Systems",
+    "SQL": "SQL & Relational Querying",
+    "WebStack": "Modern Web Stack",
+    "CloudDocker": "Cloud Architecture & Docker",
+    "ML_AI": "Machine Learning & AI",
+    "MobileDev": "Mobile Development",
+    "Cybersecurity": "Cybersecurity Defense",
+}
+
+
 def calculate_skill_gaps(profile: StudentProfile, top_career: str) -> List[Dict[str, Any]]:
     """Calculates missing competencies (Target Requisites minus Current Proficiency)."""
     career_info = CAREER_UNIVERSE[top_career]
     bench = career_info["benchmark_skills"]
     unified = profile.get_unified_skill_dict()
     gaps = []
-
-    label_map = {
-        "DSA": "Data Structures & Algorithms",
-        "OOP": "Object-Oriented Programming",
-        "DBMS": "Database Management Systems",
-        "OS_Networks": "OS & Computer Networks",
-        "SE_Principles": "Software Engineering Principles",
-        "Math_Stats": "Mathematics & Statistics",
-        "Python": "Python Programming",
-        "Java_CPP": "Java / C++ Systems",
-        "SQL": "SQL & Relational Querying",
-        "WebStack": "Modern Web Stack",
-        "CloudDocker": "Cloud Architecture & Docker",
-        "ML_AI": "Machine Learning & AI",
-        "MobileDev": "Mobile Development",
-        "Cybersecurity": "Cybersecurity Defense",
-    }
 
     # 1. Technical Skill Gaps
     for skill_key, req_val in bench.items():
@@ -1824,7 +1829,7 @@ def calculate_skill_gaps(profile: StudentProfile, top_career: str) -> List[Dict[
 
             gaps.append({
                 "skill_key": skill_key,
-                "skill_name": label_map.get(skill_key, skill_key),
+                "skill_name": SKILL_LABELS.get(skill_key, skill_key),
                 "current": f"{curr_val:g}/{scale:g}",
                 "target": f"{req_val:g}/{scale:g}",
                 "deficit": round(deficit, 1),
@@ -1988,35 +1993,310 @@ def recommend_certifications(
             "final_score": final_ranking_score,
             "coverage_pct": coverage_pct,
             "covered_skills": matched_skill_names[:3],
+            "in_domain": bool(domain_overlap),
         })
 
-    # Sort by final ranking score descending
-    scored_certs.sort(key=lambda x: x["final_score"], reverse=True)
+    # In-domain certifications always outrank off-domain ones; off-domain only fill the remaining slots
+    scored_certs.sort(key=lambda x: (x["in_domain"], x["final_score"]), reverse=True)
     return scored_certs[:3]
 
 
+def fit_strength_label(final_score: float) -> str:
+    """Maps a fused score to wording that matches its confidence band."""
+    if final_score >= HIGH_FIT_THRESHOLD:
+        return "strong"
+    if final_score >= VIABLE_FIT_THRESHOLD:
+        return "promising"
+    return "emerging"
+
+
 def generate_executive_narrative(profile: StudentProfile, top_career: Dict[str, Any], gaps: List[Dict[str, Any]]) -> str:
-    """Produces a crisp executive guidance narrative."""
+    """Template-based NLG: a guidance summary whose every claim comes from computed results."""
     role_title = top_career["title"]
     match_pct = top_career["match_pct"]
     archetype = top_career.get("archetype", "Engineering & Architecture")
     matched_softs = top_career.get("matched_soft_skills", [])
+    strength = fit_strength_label(top_career["final_score"])
 
     best_module = max(profile.core_modules.items(), key=lambda x: x[1])
+    best_module_name = SKILL_LABELS.get(best_module[0], best_module[0])
 
     soft_note = f"and natural strengths in <b style='color: #00F0FF;'>{matched_softs[0]}</b>" if matched_softs else "and analytical work habits"
 
     if gaps:
         primary_gap_name = gaps[0]["skill_name"]
-        gap_advice = f"Targeting competency development in <b style='color: #FB7185;'>{primary_gap_name}</b> while sustaining your <b style='color: #38BDF8;'>{profile.gpa:.2f} GPA</b> will position you as a top tier candidate in the <b style='color: #C084FC;'>{archetype}</b> cluster."
+        outcome = {
+            "strong": "will position you as a top tier candidate",
+            "promising": "will turn this into a strong fit",
+            "emerging": "is the first step towards a competitive profile",
+        }[strength]
+        gap_advice = f"Targeting competency development in <b style='color: #FB7185;'>{primary_gap_name}</b> while sustaining your <b style='color: #38BDF8;'>{profile.gpa:.2f} GPA</b> {outcome} in the <b style='color: #C084FC;'>{archetype}</b> cluster."
     else:
-        gap_advice = f"Your profile exhibits rounded technical depth and soft skill harmony aligned with the <b style='color: #C084FC;'>{archetype}</b> archetype."
+        gap_advice = f"Your profile already meets every benchmark for the <b style='color: #C084FC;'>{archetype}</b> archetype."
 
     sentence1 = (
-        f"Based on multi-engine evaluation, your performance in <b style='color: #38BDF8;'>{best_module[0]}</b> "
-        f"{soft_note} demonstrates an exceptional <b style='color: #00F0FF;'>{match_pct}% alignment</b> with the <b style='color: #F8FAFC;'>{role_title}</b> career path."
+        f"Based on multi-engine evaluation, your performance in <b style='color: #38BDF8;'>{best_module_name}</b> "
+        f"{soft_note} shows {"an" if strength[0] in "aeiou" else "a"} {strength} <b style='color: #00F0FF;'>{match_pct}% alignment</b> with the <b style='color: #F8FAFC;'>{role_title}</b> career path."
     )
     return f"{sentence1} {gap_advice}"
+
+
+# 7.1 PERSONALIZED LEARNING PATHWAY (deterministic: every step traces back to a gap, cert or rule)
+CAREER_PROJECTS = {
+    "Software Engineer": "Build and deploy a full-stack web app with automated tests and a CI pipeline",
+    "Data Scientist": "Complete an end-to-end analysis of a public dataset: cleaning, modelling and a written report",
+    "AI Engineer": "Train, evaluate and serve a machine learning model behind a small web API",
+    "Cloud Architect": "Containerise a multi-service app and deploy it to the cloud with infrastructure as code",
+    "UX Designer": "Run a small user study and redesign an existing app screen, written up as a case study",
+    "IT Business Analyst": "Write the requirements and process models for a real campus or club system",
+    "Game Developer": "Ship a small playable game in a game engine and publish the build",
+    "CAD-CAM Engineer": "Model a mechanical part and take it from design through to a manufacturing drawing",
+    "Cybersecurity Specialist": "Set up a home security lab and document a capture-the-flag or vulnerability assessment",
+}
+
+SOFT_SKILL_ACTIVITIES = {
+    "People": "Take a leadership or presentation role in a student society or group project",
+    "Ideas": "Join a hackathon, workshop or research project",
+    "Data": "Own the planning, tracking or analysis work on a team project",
+    "Execution": "Volunteer for hands-on lab, troubleshooting or event-operations work",
+}
+
+CERT_MAIN_SKILL_WEIGHT = 0.8
+
+PATHWAY_PHASES = ["Phase 1 · Next 1-3 months", "Phase 2 · 3-6 months", "Phase 3 · 6-12 months"]
+
+
+def soft_skill_pillar(skill: str) -> str:
+    """Returns which of the 4 pillars a soft skill belongs to."""
+    for pillar, skills in [("People", ALL_PEOPLE_SKILLS), ("Ideas", ALL_IDEAS_SKILLS),
+                           ("Data", ALL_DATA_SKILLS), ("Execution", ALL_EXEC_SKILLS)]:
+        if skill in skills:
+            return pillar
+    return "Ideas"
+
+
+def build_learning_pathway(
+    profile: StudentProfile, top_career: Dict[str, Any], gaps: List[Dict[str, Any]], certs: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Sequences gaps, certifications, activities and a portfolio project into a phased learning pathway.
+
+    Urgent technical gaps come first, then medium gaps and soft skills, then portfolio and experience.
+    Only certifications chosen by the recommender are used, so the pathway never introduces new ones.
+    """
+    steps: List[Dict[str, Any]] = []
+    unused_certs = list(certs)
+    vectors = {c.get("id"): c.get("vector", {}) for c in CERTIFICATION_CATALOG}
+
+    def add(phase: int, kind: str, title: str, detail: str) -> None:
+        steps.append({"id": f"S{len(steps) + 1}", "phase": PATHWAY_PHASES[phase], "kind": kind, "title": title, "detail": detail})
+
+    def cert_covering(skill_key: str):
+        # Pair only when the gap is one of the cert's main skills, not a minor side topic
+        for cert in unused_certs:
+            if vectors.get(cert.get("id"), {}).get(skill_key, 0.0) >= CERT_MAIN_SKILL_WEIGHT:
+                unused_certs.remove(cert)
+                return cert
+        return None
+
+    tech_gaps = [g for g in gaps if not g["skill_key"].startswith("SOFT_")]
+    soft_gaps = [g for g in gaps if g["skill_key"].startswith("SOFT_")]
+
+    for phase, urgency in [(0, "High Urgency"), (1, "Medium Priority")]:
+        for g in [g for g in tech_gaps if g["urgency"] == urgency]:
+            cert = cert_covering(g["skill_key"])
+            detail = f"Raise {g['skill_name']} from {g['current']} to {g['target']} ({urgency.lower()})."
+            if cert:
+                add(phase, "Certification", f"Work towards {cert['title']}", f"{detail} This certification covers the gap.")
+            else:
+                add(phase, "Course", f"Take a structured course in {g['skill_name']}", detail)
+
+    for g in soft_gaps:
+        skill = g["skill_name"].replace("Soft Skill: ", "")
+        add(1, "Activity", f"Practise {skill}", f"{SOFT_SKILL_ACTIVITIES[soft_skill_pillar(skill)]} to build {skill}, which {top_career['title']} roles expect.")
+
+    add(2, "Project", "Build a portfolio project", f"{CAREER_PROJECTS.get(top_career['career'], 'Build a project in your target field')}.")
+    if not profile.has_internship:
+        add(2, "Experience", "Secure an internship", f"Apply for a {top_career['title']} internship to gain industry experience.")
+
+    minor = [g["skill_name"] for g in tech_gaps if g["urgency"] == "Low / Minor"]
+    if minor:
+        add(2, "Course", "Polish minor gaps", f"Close the small remaining gaps in {', '.join(minor)}.")
+    for cert in unused_certs:
+        add(2, "Certification", f"Optional: {cert['title']}", f"Covers {', '.join(cert.get('covered_skills', [])) or 'related skills'}.")
+
+    # Close up empty phases so the plan always starts now (e.g. no urgent gaps -> medium gaps become Phase 1)
+    used = [p for p in PATHWAY_PHASES if any(s["phase"] == p for s in steps)]
+    shift = {p: PATHWAY_PHASES[i] for i, p in enumerate(used)}
+    for s in steps:
+        s["phase"] = shift[s["phase"]]
+    return steps
+
+
+# 7.2 OPTIONAL GEMINI NARRATION (presentation layer only; verified against the facts, template fallback)
+GEMINI_DEFAULT_MODEL = "gemini-3.5-flash-lite"
+
+GEMINI_SYSTEM_PROMPT = (
+    "You are the writing assistant for a university career guidance system. Rewrite the verified facts you are given "
+    "as warm, plain-English guidance addressed to the student as 'you'.\n"
+    "Rules:\n"
+    "- Use ONLY the facts provided. Never add a certification, course, company, tool, statistic or claim that is not in them.\n"
+    "- Copy every number exactly as given. Do not round, convert or invent numbers.\n"
+    "- Return one entry per pathway step, with the same ids, in the same order.\n"
+    "- summary: 2-3 sentences, at most 70 words. Each step: 1-2 sentences, at most 45 words.\n"
+    "- Plain text only, no markdown."
+)
+
+GEMINI_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "summary": {"type": "string"},
+        "steps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"id": {"type": "string"}, "text": {"type": "string"}},
+                "required": ["id", "text"],
+            },
+        },
+    },
+    "required": ["summary", "steps"],
+}
+
+# Provider names an invented recommendation would most likely mention
+KNOWN_PROVIDERS = {"AWS", "Amazon", "Azure", "Microsoft", "Google", "IBM", "Meta", "Cisco", "CompTIA", "Oracle",
+                   "Coursera", "Udemy", "edX", "Unity", "Autodesk", "Scrum", "PMI", "ISC2", "EC-Council", "Salesforce"}
+
+
+def get_app_setting(name: str, default: str = "") -> str:
+    """Reads a setting from Streamlit secrets, then environment variables."""
+    try:
+        if name in st.secrets:
+            return str(st.secrets[name])
+    except Exception:
+        pass
+    return os.environ.get(name, default)
+
+
+def build_narration_facts(
+    profile: StudentProfile, top_career: Dict[str, Any], gaps: List[Dict[str, Any]],
+    certs: List[Dict[str, Any]], pathway: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Collects the computed facts the narrator may use. Nothing outside this dict may appear in its output."""
+    best_module = max(profile.core_modules.items(), key=lambda x: x[1])
+    return {
+        "career": top_career["title"],
+        "match": f"{top_career['match_pct']}%",
+        "fit": fit_strength_label(top_career["final_score"]),
+        "gpa": round(profile.gpa, 2),
+        "best_module": SKILL_LABELS.get(best_module[0], best_module[0]),
+        "best_module_score": best_module[1],
+        "matched_soft_skills": top_career.get("matched_soft_skills", []),
+        "top_gaps": [{"skill": g["skill_name"], "current": g["current"], "target": g["target"], "urgency": g["urgency"]} for g in gaps[:4]],
+        "recommended_certifications": [c["title"] for c in certs],
+        "pathway": [{k: s[k] for k in ("id", "phase", "kind", "title", "detail")} for s in pathway],
+    }
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def call_gemini(facts_json: str, model: str, api_key: str) -> Dict[str, Any]:
+    """Asks Gemini to narrate the facts as JSON. Raises on any failure (failures are not cached)."""
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=20000))
+    response = client.models.generate_content(
+        model=model,
+        contents=f"Verified facts (JSON):\n{facts_json}",
+        config=types.GenerateContentConfig(
+            system_instruction=GEMINI_SYSTEM_PROMPT,
+            temperature=0.3,
+            max_output_tokens=1024,
+            response_mime_type="application/json",
+            response_json_schema=GEMINI_RESPONSE_SCHEMA,
+        ),
+    )
+    return json.loads(response.text)
+
+
+def validate_narration(output: Any, facts: Dict[str, Any]) -> str:
+    """Checks LLM narration against the facts. Returns "" if valid, otherwise the reason it was rejected."""
+    if not isinstance(output, dict) or not isinstance(output.get("summary"), str) or not isinstance(output.get("steps"), list):
+        return "response did not match the expected structure"
+    summary = output["summary"].strip()
+    if not summary or len(summary) > 600:
+        return "summary was empty or too long"
+
+    expected_ids = [s["id"] for s in facts["pathway"]]
+    got_ids = [s.get("id") if isinstance(s, dict) else None for s in output["steps"]]
+    if got_ids != expected_ids:
+        return "pathway steps were missing, added or reordered"
+    texts = [summary]
+    for s in output["steps"]:
+        text = s.get("text")
+        if not isinstance(text, str) or not text.strip() or len(text) > 400:
+            return f"step {s.get('id')} text was empty or too long"
+        texts.append(text)
+    combined = " ".join(texts)
+
+    facts_text = json.dumps(facts, ensure_ascii=False)
+    allowed_numbers = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", facts_text)}
+    for n in re.findall(r"\d+(?:\.\d+)?", combined):
+        if float(n) not in allowed_numbers:
+            return f"introduced a number not in the facts ({n})"
+
+    for cert in CERTIFICATION_CATALOG:
+        title = cert.get("title", "")
+        if title and title.lower() in combined.lower() and title not in facts["recommended_certifications"]:
+            return f"mentioned a certification the engine did not recommend ({title})"
+    for provider in KNOWN_PROVIDERS:
+        pattern = rf"\b{re.escape(provider)}\b"
+        if re.search(pattern, combined, re.IGNORECASE) and not re.search(pattern, facts_text, re.IGNORECASE):
+            return f"mentioned a provider not in the facts ({provider})"
+    return ""
+
+
+def generate_guidance(
+    profile: StudentProfile, top_career: Dict[str, Any], gaps: List[Dict[str, Any]], certs: List[Dict[str, Any]],
+    narrator=None,
+) -> Dict[str, Any]:
+    """Builds the summary and learning pathway: Gemini narration when configured and verified, else template NLG.
+
+    `narrator(facts) -> dict` can be passed to replace the Gemini call (used by tests).
+    """
+    pathway = build_learning_pathway(profile, top_career, gaps, certs)
+    guidance = {
+        "narrative": generate_executive_narrative(profile, top_career, gaps),
+        "pathway": [dict(s, text=s["detail"]) for s in pathway],
+        "source": "template",
+        "note": "",
+    }
+
+    facts = build_narration_facts(profile, top_career, gaps, certs, pathway)
+    model = get_app_setting("GEMINI_MODEL", GEMINI_DEFAULT_MODEL)
+    if narrator is None:
+        api_key = get_app_setting("GEMINI_API_KEY")
+        if not api_key:
+            guidance["note"] = "Gemini is not configured (no GEMINI_API_KEY), so template narration is shown."
+            return guidance
+        narrator = lambda f: call_gemini(json.dumps(f, ensure_ascii=False, sort_keys=True), model, api_key)
+
+    try:
+        output = narrator(facts)
+    except Exception as e:
+        guidance["note"] = f"Gemini request failed ({type(e).__name__}), so template narration is shown."
+        return guidance
+
+    problem = validate_narration(output, facts)
+    if problem:
+        guidance["note"] = f"Gemini narration was rejected because it {problem}, so template narration is shown."
+        return guidance
+
+    guidance["narrative"] = html.escape(output["summary"].strip())
+    for step, narrated in zip(guidance["pathway"], output["steps"]):
+        step["text"] = narrated["text"].strip()
+    guidance["source"] = "gemini"
+    guidance["note"] = f"Narrated by {model} and verified against the engine's facts: no new numbers, certifications or providers."
+    return guidance
 
 
 # -----------------------------------------------------------------------------
@@ -2160,7 +2440,7 @@ def apply_preset(preset_key: str) -> None:
     sh = calculate_shap_contributions(prof, top["career"])
     gp = calculate_skill_gaps(prof, top["career"])
     rc = recommend_certifications(gp, target_career=top["career"], student_year=year)
-    nr = generate_executive_narrative(prof, top, gp)
+    gd = generate_guidance(prof, top, gp, rc)
     st.session_state["evaluation_data"] = {
         "profile": prof,
         "results": res,
@@ -2168,7 +2448,8 @@ def apply_preset(preset_key: str) -> None:
         "shap_df": sh,
         "gaps": gp,
         "certs": rc,
-        "narrative": nr,
+        "narrative": gd["narrative"],
+        "guidance": gd,
     }
 
 
@@ -2199,7 +2480,7 @@ if "evaluation_data" not in st.session_state:
     def_sh = calculate_shap_contributions(def_prof, def_top["career"])
     def_gp = calculate_skill_gaps(def_prof, def_top["career"])
     def_rc = recommend_certifications(def_gp, target_career=def_top["career"], student_year=def_year)
-    def_nr = generate_executive_narrative(def_prof, def_top, def_gp)
+    def_gd = generate_guidance(def_prof, def_top, def_gp, def_rc)
     st.session_state["evaluation_data"] = {
         "profile": def_prof,
         "results": def_res,
@@ -2207,7 +2488,8 @@ if "evaluation_data" not in st.session_state:
         "shap_df": def_sh,
         "gaps": def_gp,
         "certs": def_rc,
-        "narrative": def_nr,
+        "narrative": def_gd["narrative"],
+        "guidance": def_gd,
     }
 
 
@@ -2556,7 +2838,7 @@ with tab1:
         shap_df = calculate_shap_contributions(profile, top_rec["career"])
         gaps = calculate_skill_gaps(profile, top_rec["career"])
         rec_certs = recommend_certifications(gaps, target_career=top_rec["career"], student_year=in_year)
-        narrative = generate_executive_narrative(profile, top_rec, gaps)
+        guidance = generate_guidance(profile, top_rec, gaps, rec_certs)
 
         top_driver = shap_df[shap_df["Delta"] > 0].iloc[-1]["Feature"] if not shap_df[shap_df["Delta"] > 0].empty else "Academic Foundation"
         critical_gap = gaps[0]["skill_name"] if gaps else "None (Target Met)"
@@ -2581,7 +2863,8 @@ with tab1:
             "shap_df": shap_df,
             "gaps": gaps,
             "certs": rec_certs,
-            "narrative": narrative,
+            "narrative": guidance["narrative"],
+            "guidance": guidance,
         }
 
         st.toast("⚡ Multi-Engine Evaluation complete! View your results in Tab 02 // Guidance & Roadmap.", icon="✅")
@@ -2601,6 +2884,7 @@ with tab2:
         gaps = eval_data["gaps"]
         certs = eval_data["certs"]
         narrative = eval_data["narrative"]
+        guidance = eval_data.get("guidance")
 
         # Active Model indicator badge
         active_dataset_name = st.session_state.get("active_dataset_name", "Standard University Benchmark Dataset")
@@ -2717,6 +3001,8 @@ with tab2:
             """,
             unsafe_allow_html=True,
         )
+        if guidance and guidance.get("note"):
+            st.caption(("✨ " if guidance["source"] == "gemini" else "📝 ") + guidance["note"])
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -2941,6 +3227,35 @@ with tab2:
                         st.link_button("🌐 Official Exam & Syllabus", cert['official_url'], use_container_width=True)
                     with btn_col2:
                         st.link_button("🎓 Prepare on Course Platform", cert['prep_url'], use_container_width=True)
+
+        # 4. Personalized Learning Pathway (sequenced from gaps, recommended certs and career projects)
+        if guidance and guidance.get("pathway"):
+            st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 1.5rem 0;'>", unsafe_allow_html=True)
+            st.markdown("<div class='pf-card-title'>🗺️ Personalized Learning Pathway</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='pf-card-desc'>A sequenced plan towards <b style='color: #00F0FF;'>{top_rec['title']}</b>: "
+                "urgent gaps first, then supporting skills, then portfolio and experience.</div>",
+                unsafe_allow_html=True,
+            )
+            kind_badges = {
+                "Course": "pf-badge-blue", "Certification": "pf-badge-purple", "Activity": "pf-badge-med",
+                "Project": "pf-badge-low", "Experience": "pf-badge-slate",
+            }
+            phases = [p for p in PATHWAY_PHASES if any(s["phase"] == p for s in guidance["pathway"])]
+            for phase, col in zip(phases, st.columns(len(PATHWAY_PHASES))):
+                with col:
+                    st.markdown(f"**{phase}**")
+                    for s in [s for s in guidance["pathway"] if s["phase"] == phase]:
+                        st.markdown(
+                            f"""
+                            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 0.75rem 0.9rem; margin-bottom: 0.6rem;">
+                                <span class="pf-badge {kind_badges.get(s['kind'], 'pf-badge-slate')}">{html.escape(s['kind'])}</span>
+                                <div style="font-size: 0.88rem; font-weight: 600; color: #F8FAFC; margin-top: 0.45rem;">{html.escape(s['title'])}</div>
+                                <div style="font-size: 0.8rem; color: #CBD5E1; margin-top: 0.25rem; line-height: 1.45;">{html.escape(s['text'])}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
 
 # -----------------------------------------------------------------------------

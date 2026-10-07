@@ -34,6 +34,7 @@ from app import (
     calculate_skill_gaps,
     recommend_certifications,
     generate_executive_narrative,
+    generate_guidance,
     init_database,
     save_student_record,
     fetch_all_records,
@@ -41,7 +42,7 @@ from app import (
 
 
 def run_tests():
-    print("✦ [1/8] Testing Knowledge Base & Universe integrity...")
+    print("✦ [1/9] Testing Knowledge Base & Universe integrity...")
     assert len(CAREER_UNIVERSE) == 9, f"Expected 9 careers, got {len(CAREER_UNIVERSE)}"
     assert len(CERTIFICATION_CATALOG) >= 8, f"Expected >=8 certs, got {len(CERTIFICATION_CATALOG)}"
     for cname, cinfo in CAREER_UNIVERSE.items():
@@ -52,7 +53,7 @@ def run_tests():
     assert set(RULE_BASE["career_rules"]) == set(CAREER_UNIVERSE), "rules.json must define rules for every career"
     print("  ✓ Knowledge Base integrity & 5-Archetype mappings passed.")
 
-    print("✦ [2/8] Creating test student profile with 4-pillar soft skills...")
+    print("✦ [2/9] Creating test student profile with 4-pillar soft skills...")
     profile = StudentProfile(
         gpa=3.75,
         year="3rd Year",
@@ -90,7 +91,7 @@ def run_tests():
     )
     print("  ✓ Profile object created successfully with 4-pillar soft skills.")
 
-    print("✦ [3/8] Testing Rule-Based Engine & Soft Skill Bonus Trace...")
+    print("✦ [3/9] Testing Rule-Based Engine & Soft Skill Bonus Trace...")
     rule_score, rules_fired = evaluate_rule_engine(profile, "AI Engineer")
     assert 0.0 <= rule_score <= 1.0, f"Invalid rule score: {rule_score}"
     assert len(rules_fired) > 0, "Expected rules to fire for AI Engineer"
@@ -98,7 +99,7 @@ def run_tests():
     assert soft_rule_fired, "Expected soft skills rule R-SOFT-SKILLS to fire"
     print(f"  ✓ Rule score: {rule_score:.2f}, Rules fired count: {len(rules_fired)}")
 
-    print("✦ [4/8] Testing Fuzzy Logic Mamdani Suitability Engine with Soft Skill Clusters...")
+    print("✦ [4/9] Testing Fuzzy Logic Mamdani Suitability Engine with Soft Skill Clusters...")
     fuzzy_score = evaluate_fuzzy_suitability(profile, "AI Engineer")
     assert 0.0 <= fuzzy_score <= 1.0, f"Invalid fuzzy score: {fuzzy_score}"
     perfect = StudentProfile(4.0, profile.year, profile.core_modules, profile.electives, profile.tech_skills,
@@ -106,7 +107,7 @@ def run_tests():
     assert evaluate_fuzzy_suitability(perfect, "AI Engineer") >= fuzzy_score, "A perfect GPA/soft-skill match must not score lower"
     print(f"  ✓ Fuzzy suitability score: {fuzzy_score:.2f}")
 
-    print("✦ [5/8] Testing ML Classifier & Hybrid Multi-Engine Fusion...")
+    print("✦ [5/9] Testing ML Classifier & Hybrid Multi-Engine Fusion...")
     ml_probs = evaluate_ml_model(profile)
     assert len(ml_probs) == 9, f"Expected 9 probabilities, got {len(ml_probs)}"
 
@@ -115,7 +116,7 @@ def run_tests():
     top_career = results[0]
     print(f"  ✓ Top recommendation: {top_career['title']} ({top_career['match_pct']}%) [{top_career['archetype']}] with {top_career['confidence']}")
 
-    print("✦ [6/8] Testing SHAP XAI, Skill Gap & Cosine Certification Matching...")
+    print("✦ [6/9] Testing SHAP XAI, Skill Gap & Cosine Certification Matching...")
     shap_df = calculate_shap_contributions(profile, top_career["career"])
     assert not shap_df.empty, "SHAP dataframe should not be empty"
     assert shap_df.attrs["method"] == "shap", "Expected real SHAP TreeExplainer values, got the proxy fallback"
@@ -131,7 +132,7 @@ def run_tests():
     print(f"  ✓ XAI deltas: {len(shap_df)}, Skill gaps: {len(gaps)}, Recommended certs: {len(certs)}")
     print(f"  ✓ Narrative preview: {narrative[:80]}...")
 
-    print("✦ [7/8] Testing Decision Tree baseline vs Random Forest...")
+    print("✦ [7/9] Testing Decision Tree baseline vs Random Forest...")
     df = generate_benchmark_dataset(samples_per_class=20)
     dt = train_custom_classifier(df, max_depth=8, model_type="decision_tree")
     assert "error" not in dt and type(dt["model"]).__name__ == "DecisionTreeClassifier", dt.get("error")
@@ -139,7 +140,7 @@ def run_tests():
     assert list(comparison["Model"]) == ["Decision Tree", "Random Forest"]
     print("  ✓ " + " | ".join(f"{r.Model}: test {r._3:.1%}, CV {r._4:.1%}" for r in comparison.itertuples()))
 
-    print("✦ [8/8] Testing SQLite Local Database Storage...")
+    print("✦ [8/9] Testing SQLite Local Database Storage...")
     # Use a throwaway database so test runs never add rows to the real career_records.db
     real_db = app.DB_FILE
     tmp_dir = tempfile.TemporaryDirectory()
@@ -162,7 +163,49 @@ def run_tests():
     tmp_dir.cleanup()
     print(f"  ✓ Database record verified in a temporary database. Total rows: {len(df_records)}")
 
-    print("\n🎉 ALL 8/8 TEST MODULES PASSED PERFECTLY!\n")
+    print("✦ [9/9] Testing Learning Pathway & Narration Guardrails...")
+    certs = recommend_certifications(gaps, target_career=top_career["career"], student_year=profile.year)
+    os.environ.pop("GEMINI_API_KEY", None)
+    guidance = generate_guidance(profile, top_career, gaps, certs)
+    assert guidance["source"] == "template" and "not configured" in guidance["note"]
+    pathway = guidance["pathway"]
+    assert pathway and [s["id"] for s in pathway] == [f"S{i + 1}" for i in range(len(pathway))]
+    assert any(s["kind"] == "Project" for s in pathway), "Pathway should include a portfolio project"
+    recommended = {c["title"] for c in certs}
+    for s in pathway:
+        if s["kind"] == "Certification":
+            assert any(t in s["title"] for t in recommended), f"Pathway introduced an unrecommended cert: {s['title']}"
+
+    weak = dict(top_career, final_score=0.30, match_pct=30.0)
+    weak_text = generate_executive_narrative(profile, weak, gaps)
+    assert "exceptional" not in weak_text and "top tier" not in weak_text and "emerging" in weak_text
+    assert "Math_Stats" not in generate_executive_narrative(profile, top_career, gaps), "Narrative must use readable skill names"
+
+    def narration(summary, steps=None):
+        return lambda facts: {"summary": summary, "steps": steps if steps is not None else [{"id": s["id"], "text": s["detail"]} for s in facts["pathway"]]}
+
+    ok = generate_guidance(profile, top_career, gaps, certs, narrator=narration(f"You are a {top_career['match_pct']}% match for {top_career['title']}."))
+    assert ok["source"] == "gemini", ok["note"]
+    unrecommended = next(c["title"] for c in CERTIFICATION_CATALOG if c["title"] not in recommended)
+    rejections = {
+        "invented number": narration("You are a 99.9% match."),
+        "unrecommended cert": narration(f"Consider the {unrecommended}."),
+        "invented provider": narration("Try an Oracle course." if "Oracle" not in str(certs) else "Try a Salesforce course."),
+        "dropped step": narration("Good fit.", steps=[]),
+    }
+    for name, fake in rejections.items():
+        res = generate_guidance(profile, top_career, gaps, certs, narrator=fake)
+        assert res["source"] == "template" and "rejected" in res["note"], f"{name} was not rejected: {res['note']}"
+    injected = generate_guidance(profile, top_career, gaps, certs, narrator=narration("<script>x</script> Good fit."))
+    assert "<script>" not in injected["narrative"], "LLM output must be HTML-escaped"
+
+    def failing(facts):
+        raise TimeoutError("simulated timeout")
+    failed = generate_guidance(profile, top_career, gaps, certs, narrator=failing)
+    assert failed["source"] == "template" and "failed" in failed["note"]
+    print(f"  ✓ Pathway steps: {len(pathway)}; valid narration accepted; {len(rejections)} invalid narrations rejected; failures fall back to template")
+
+    print("\n🎉 ALL 9/9 TEST MODULES PASSED PERFECTLY!\n")
 
 
 if __name__ == "__main__":

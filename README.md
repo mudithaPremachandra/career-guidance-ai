@@ -18,6 +18,8 @@ Live app: https://eai-career-guidance-ai.streamlit.app/
   - 40% Supervised Machine Learning Classifier (Random Forest, or a Decision Tree baseline)
 - **Explainable AI (XAI)**: per-student SHAP TreeExplainer attributions for the ML engine.
 - **Skill Gap Analysis**: gaps ranked by size relative to each skill's scale, with urgency levels.
+- **Personalized Learning Pathway**: a phased plan built from the skill gaps, the recommended certifications, soft-skill activities and a career-specific portfolio project.
+- **Guidance Narration**: template-based text generation by default. If a Gemini API key is configured, Gemini rewrites the same facts more naturally. Its output is checked against the facts (no new numbers, certifications or providers), and the app falls back to the template if a check fails.
 - **Cosine-Similarity Industry Certifications**: recommendations from a curated catalogue of 19 certifications (`certifications.json`).
 - **Dataset & ML Model Studio**: benchmark dataset generation, custom CSV upload, model retraining, Decision Tree vs Random Forest comparison, feature importances, and batch prediction.
 - **SQLite History & Analytics**: built-in persistence (`career_records.db`) with an advisor history view.
@@ -61,3 +63,13 @@ streamlit run app.py
 ```powershell
 python test_pipeline.py
 ```
+
+## ✨ Optional: Gemini narration
+
+The app works without this. To turn it on, create `.streamlit/secrets.toml` (it is git-ignored, so never commit your key):
+```toml
+GEMINI_API_KEY = "your-key-from-aistudio.google.com"
+# Optional, defaults to gemini-3.5-flash-lite
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+```
+On Streamlit Community Cloud, paste the same lines into the app's **Settings → Secrets** instead. The page shows which narration was used under the AI Advisory summary.

@@ -37,3 +37,6 @@ dist/
 # Session handover (local scratch, not a deliverable)
 session_handover_summary.md
 session-handover-summaries/
+
+# Streamlit secrets (API keys) must never be committed
+.streamlit/secrets.toml
