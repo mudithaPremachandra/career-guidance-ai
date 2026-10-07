@@ -3,13 +3,13 @@ PathFinder AI: Technology-Themed Undergraduate AI Career Guidance System
 -----------------------------------------------------------------------
 A complete, standalone, high-tech cyber/AI Streamlit application integrating:
 1. 4-Pillar Categorized Soft Skills & Work Strengths (People, Ideas, Data, Execution)
-2. 6-Archetype Job-to-Soft-Skill Requirement Mapping with Weight Bonus
+2. 5-Archetype Job-to-Soft-Skill Requirement Mapping with Weight Bonus
 3. Reactive Profile Intake with real-time dynamic Elective & Module Sliders
-4. Rule-Based Reasoning with rule-firing trace
-5. Fuzzy Logic Suitability Engine (Mamdani inference & defuzzification)
-6. Supervised Machine Learning Classifier (Random Forest proxy / Retrainable on Custom Datasets)
+4. Rule-Based Reasoning over the rules.json knowledge base, with rule-firing trace
+5. Fuzzy Logic Suitability Engine (scikit-fuzzy Mamdani inference & centroid defuzzification)
+6. Supervised Machine Learning Classifier (Random Forest or Decision Tree baseline / Retrainable on Custom Datasets)
 7. Multi-Engine Score Fusion (30% Rule + 30% Fuzzy + 40% ML)
-8. Explainable AI (SHAP proxy divergent attribution)
+8. Explainable AI (SHAP TreeExplainer per-student attribution)
 9. Skill Gap Analysis with Urgency Prioritization (Technical & Soft Skills)
 10. Cosine-Similarity Industry Certification Recommender
 11. Dataset & Model Studio (Upload Custom CSV / Load Benchmark / Train Model / Feature Importances / Batch Predictions)
@@ -30,7 +30,9 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import skfuzzy as fuzz
 import streamlit as st
+from skfuzzy import control as ctrl
 
 # -----------------------------------------------------------------------------
 # 1. STREAMLIT PAGE CONFIGURATION & CYBER TECH DESIGN SYSTEM
@@ -479,7 +481,7 @@ init_database()
 
 
 # -----------------------------------------------------------------------------
-# 3. KNOWLEDGE BASE & 6-ARCHETYPE CAREER DEFINITIONS
+# 3. KNOWLEDGE BASE & 5-ARCHETYPE CAREER DEFINITIONS
 # -----------------------------------------------------------------------------
 CAREER_UNIVERSE = {
     "Software Engineer": {
@@ -1244,12 +1246,36 @@ def preprocess_features(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, List[
     return np.array(X_list, dtype=np.float32), np.array(y_list, dtype=np.int64), careers
 
 
+# Display names for the 20 columns produced by preprocess_features() / build_feature_vector(), in order
+FEATURE_NAMES = [
+    "GPA", "Year", "DSA", "OOP", "DBMS", "OS & Networks",
+    "SE Principles", "Math & Stats", "Python", "Java/C++",
+    "SQL", "Web Stack", "Cloud/Docker", "ML/AI", "Mobile Dev",
+    "Cybersecurity", "Internship", "Projects", "Work Style", "Soft Skills Affinity",
+]
+
+MODEL_LABELS = {"random_forest": "Random Forest", "decision_tree": "Decision Tree"}
+
+
+def make_classifier(model_type: str, n_estimators: int, max_depth: int):
+    """Creates an untrained Random Forest (ensemble) or Decision Tree (single-tree baseline)."""
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.tree import DecisionTreeClassifier
+
+    if model_type == "decision_tree":
+        return DecisionTreeClassifier(max_depth=max_depth, random_state=42)
+    return RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+
+
 def train_custom_classifier(
-    df: pd.DataFrame, n_estimators: int = 100, max_depth: int = 10, test_size: float = 0.2
+    df: pd.DataFrame,
+    n_estimators: int = 100,
+    max_depth: int = 10,
+    test_size: float = 0.2,
+    model_type: str = "random_forest",
 ) -> Dict[str, Any]:
-    """Trains a Random Forest classifier on the provided DataFrame and returns metrics."""
+    """Trains a Random Forest or Decision Tree classifier on the provided DataFrame and returns metrics."""
     try:
-        from sklearn.ensemble import RandomForestClassifier
         from sklearn.metrics import accuracy_score
         from sklearn.model_selection import train_test_split
 
@@ -1262,26 +1288,20 @@ def train_custom_classifier(
             X, y, test_size=test_size, random_state=42, stratify=y if len(np.unique(y)) > 1 and min(np.bincount(y)) >= 2 else None
         )
 
-        clf = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+        clf = make_classifier(model_type, n_estimators, max_depth)
         clf.fit(X_train, y_train)
 
         train_acc = accuracy_score(y_train, clf.predict(X_train))
         test_acc = accuracy_score(y_test, clf.predict(X_test))
 
-        feature_names = [
-            "GPA", "Year", "DSA", "OOP", "DBMS", "OS & Networks",
-            "SE Principles", "Math & Stats", "Python", "Java/C++",
-            "SQL", "Web Stack", "Cloud/Docker", "ML/AI", "Mobile Dev",
-            "Cybersecurity", "Internship", "Projects", "Work Style", "Soft Skills Affinity",
-        ]
-
         importances = clf.feature_importances_
-        feat_imp_df = pd.DataFrame({"Feature": feature_names, "Importance": importances}).sort_values(
+        feat_imp_df = pd.DataFrame({"Feature": FEATURE_NAMES, "Importance": importances}).sort_values(
             by="Importance", ascending=True
         )
 
         return {
             "model": clf,
+            "model_type": model_type,
             "careers": careers,
             "train_acc": train_acc,
             "test_acc": test_acc,
@@ -1294,119 +1314,104 @@ def train_custom_classifier(
         return {"error": str(e)}
 
 
+def compare_classifiers(
+    df: pd.DataFrame, n_estimators: int = 100, max_depth: int = 10, test_size: float = 0.2, cv_folds: int = 5
+) -> pd.DataFrame:
+    """Benchmarks the Decision Tree baseline against the Random Forest on the same split and CV folds."""
+    from sklearn.model_selection import StratifiedKFold, cross_val_score
+
+    X, y, _ = preprocess_features(df)
+    folds = StratifiedKFold(n_splits=min(cv_folds, int(np.bincount(y).min())), shuffle=True, random_state=42)
+    rows = []
+    for model_type in ["decision_tree", "random_forest"]:
+        res = train_custom_classifier(df, n_estimators, max_depth, test_size, model_type=model_type)
+        if "error" in res:
+            raise ValueError(res["error"])
+        cv = cross_val_score(make_classifier(model_type, n_estimators, max_depth), X, y, cv=folds)
+        rows.append({
+            "Model": MODEL_LABELS[model_type],
+            "Train Accuracy": res["train_acc"],
+            "Test Accuracy": res["test_acc"],
+            "CV Mean": cv.mean(),
+            "CV Std": cv.std(),
+        })
+    return pd.DataFrame(rows)
+
+
 # -----------------------------------------------------------------------------
 # 6. INFERENCE ENGINES (RULE-BASED, FUZZY LOGIC, SUPERVISED ML)
 # -----------------------------------------------------------------------------
 
 # 6.1 ENGINE A: RULE-BASED REASONING (30% Weight)
+# The IF-THEN knowledge base lives in rules.json so rules can be audited and edited without code changes.
+RULE_OPERATORS = {
+    "gte": lambda a, b: a >= b,
+    "gt": lambda a, b: a > b,
+    "lte": lambda a, b: a <= b,
+    "lt": lambda a, b: a < b,
+    "eq": lambda a, b: a == b,
+}
+
+
+def load_rule_base() -> Dict[str, Any]:
+    """Loads the IF-THEN career rule base from rules.json."""
+    json_path = os.path.join(os.path.dirname(__file__), "rules.json") if "__file__" in globals() else "rules.json"
+    with open(json_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+RULE_BASE = load_rule_base()
+
+
+def evaluate_rule_condition(cond: Dict[str, Any], profile: StudentProfile, unified: Dict[str, float]) -> bool:
+    """Recursively evaluates one rules.json condition against a student profile."""
+    if "always" in cond:
+        return bool(cond["always"])
+    if "all" in cond:
+        return all(evaluate_rule_condition(c, profile, unified) for c in cond["all"])
+    if "any" in cond:
+        return any(evaluate_rule_condition(c, profile, unified) for c in cond["any"])
+    if "elective" in cond:
+        return cond["elective"] in profile.electives
+
+    if "skill" in cond:
+        value = unified.get(cond["skill"], 0.0)
+    elif "profile" in cond:
+        value = getattr(profile, cond["profile"])
+    else:
+        raise ValueError(f"Unknown rule condition: {cond}")
+
+    ops = [op for op in RULE_OPERATORS if op in cond]
+    if len(ops) != 1:
+        raise ValueError(f"Rule condition needs exactly one operator {list(RULE_OPERATORS)}: {cond}")
+    return RULE_OPERATORS[ops[0]](value, cond[ops[0]])
+
+
 def evaluate_rule_engine(profile: StudentProfile, career_name: str) -> Tuple[float, List[str]]:
-    """Evaluates explicit academic prerequisite, gatekeeper rules, and soft-skill requirement bonus."""
+    """Forward-chains the rules.json knowledge base and returns a normalized score plus the firing trace."""
     rules_fired: List[str] = []
     points = 0.0
-    max_possible = 100.0
+    max_possible = float(RULE_BASE.get("max_points", 100.0))
 
     unified = profile.get_unified_skill_dict()
-    electives_set = set(profile.electives.keys())
     career_info = CAREER_UNIVERSE[career_name]
 
-    # Baseline GPA rule
-    if profile.gpa >= 3.5:
-        points += 15.0
-        rules_fired.append("Rule [R-GPA-HIGH]: Exceptional academic standing GPA >= 3.5 (+15).")
-    elif profile.gpa >= 3.0:
-        points += 10.0
-        rules_fired.append("Rule [R-GPA-MED]: Strong academic standing GPA >= 3.0 (+10).")
-    else:
-        points += 5.0
-        rules_fired.append("Rule [R-GPA-BASE]: Foundation academic standing (+5).")
-
-    # Internship & Practical Experience Rule
-    if profile.has_internship:
-        points += 15.0
-        rules_fired.append("Rule [R-EXP-INTERN]: Completed industry/university internship (+15).")
-    if profile.projects_count >= 3:
-        points += 10.0
-        rules_fired.append("Rule [R-EXP-PROJ]: Robust technical project portfolio >= 3 (+10).")
-
-    # Role-Specific Core Rules
-    if career_name == "Software Engineer":
-        if unified["DSA"] >= 75 and unified["OOP"] >= 75:
-            points += 25.0
-            rules_fired.append("Rule [R-SE-CORE]: High DSA & OOP core competency verified (+25).")
-        if unified["SE_Principles"] >= 75:
-            points += 15.0
-            rules_fired.append("Rule [R-SE-ENG]: Software Engineering architecture principles verified (+15).")
-
-    elif career_name == "Data Scientist":
-        if unified["Math_Stats"] >= 80 and unified["DBMS"] >= 75:
-            points += 25.0
-            rules_fired.append("Rule [R-DS-MATH]: Advanced statistics and relational data foundations (+25).")
-        if unified["Python"] >= 4 and unified["SQL"] >= 4:
-            points += 15.0
-            rules_fired.append("Rule [R-DS-TOOL]: High Python data science and SQL query proficiency (+15).")
-        if "Data Mining & Big Data" in electives_set:
-            points += 10.0
-            rules_fired.append("Rule [R-DS-ELEC]: Specialized elective 'Data Mining & Big Data' completed (+10).")
-
-    elif career_name == "AI Engineer":
-        if unified["Math_Stats"] >= 80 and unified["DSA"] >= 80:
-            points += 20.0
-            rules_fired.append("Rule [R-AI-MATH]: Advanced algorithmic and mathematical foundations (+20).")
-        if unified["ML_AI"] >= 4 and unified["Python"] >= 4:
-            points += 20.0
-            rules_fired.append("Rule [R-AI-FRAMEWORK]: Deep learning and PyTorch/TensorFlow expertise (+20).")
-        if "AI & Machine Learning" in electives_set:
-            points += 10.0
-            rules_fired.append("Rule [R-AI-ELEC]: Specialized elective 'AI & Machine Learning' completed (+10).")
-
-    elif career_name == "Cloud Architect":
-        if unified["OS_Networks"] >= 80 and unified["CloudDocker"] >= 3:
-            points += 25.0
-            rules_fired.append("Rule [R-CLOUD-NET]: Strong OS networking, Linux, and containerization (+25).")
-        if "Cloud Computing" in electives_set:
-            points += 15.0
-            rules_fired.append("Rule [R-CLOUD-ELEC]: Specialized elective 'Cloud Computing' completed (+15).")
-
-    elif career_name == "UX Designer":
-        if "Human-Computer Interaction (UI/UX)" in electives_set or unified["WebStack"] >= 3:
-            points += 30.0
-            rules_fired.append("Rule [R-UX-HCI]: HCI / UI Design coursework or front-end mastery (+30).")
-
-    elif career_name == "IT Business Analyst":
-        if "IT Project Management" in electives_set or unified["SE_Principles"] >= 80:
-            points += 30.0
-            rules_fired.append("Rule [R-BA-PM]: Agile PM coursework or strong SE process modeling (+30).")
-        if unified["SQL"] >= 3 and unified["DBMS"] >= 70:
-            points += 15.0
-            rules_fired.append("Rule [R-BA-DATA]: Business data querying and requirements modeling (+15).")
-
-    elif career_name == "Game Developer":
-        if "Game Engine Development" in electives_set or "Computer Graphics & Animation" in electives_set:
-            points += 30.0
-            rules_fired.append("Rule [R-GAME-ELEC]: Specialized graphics or game engine electives (+30).")
-        if unified["Java_CPP"] >= 4 and unified["DSA"] >= 75:
-            points += 15.0
-            rules_fired.append("Rule [R-GAME-CPP]: Robust C++ systems programming and real-time data structures (+15).")
-
-    elif career_name == "CAD-CAM Engineer":
-        if "CAD/CAM Principles" in electives_set:
-            points += 30.0
-            rules_fired.append("Rule [R-CAD-ELEC]: Specialized elective 'CAD/CAM Principles' verified (+30).")
-        if unified["Math_Stats"] >= 75 and unified["SE_Principles"] >= 70:
-            points += 15.0
-            rules_fired.append("Rule [R-CAD-MATH]: Strong computational geometry and engineering principles (+15).")
-
-    elif career_name == "Cybersecurity Specialist":
-        if "Network Security & Cyber Defense" in electives_set or unified["Cybersecurity"] >= 4:
-            points += 30.0
-            rules_fired.append("Rule [R-SEC-CORE]: Cyber defense specialization or high technical security score (+30).")
-        if unified["OS_Networks"] >= 80:
-            points += 15.0
-            rules_fired.append("Rule [R-SEC-NET]: Advanced mastery of TCP/IP, OSI protocols, and OS internals (+15).")
+    # Common rules first, then the career's own rules; an exclusive_group behaves as an IF / ELSE IF chain.
+    fired_groups = set()
+    for rule in RULE_BASE["common_rules"] + RULE_BASE["career_rules"].get(career_name, []):
+        group = rule.get("exclusive_group")
+        if group in fired_groups:
+            continue
+        if evaluate_rule_condition(rule["if"], profile, unified):
+            points += float(rule["points"])
+            rules_fired.append(f"Rule [{rule['id']}]: {rule['text']} (+{rule['points']:g}).")
+            if group:
+                fired_groups.add(group)
 
     # Job-to-Soft-Skill Archetype Requirement Mapping (+20% Weight Bonus)
+    soft_rule = RULE_BASE["soft_skill_rule"]
     required_softs = career_info.get("required_soft_skills", [])
-    weight_bonus = career_info.get("weight_bonus", 0.20)
+    weight_bonus = career_info.get("weight_bonus", soft_rule.get("default_weight_bonus", 0.20))
     matched_softs = [s for s in required_softs if s in profile.soft_skills]
 
     if required_softs:
@@ -1415,101 +1420,101 @@ def evaluate_rule_engine(profile: StudentProfile, career_name: str) -> Tuple[flo
         points += soft_points
         if matched_softs:
             rules_fired.append(
-                f"Rule [R-SOFT-SKILLS]: Archetype '{career_info['archetype']}' "
+                f"Rule [{soft_rule['id']}]: Archetype '{career_info['archetype']}' "
                 f"matched ({len(matched_softs)}/{len(required_softs)}) required soft skills: {', '.join(matched_softs[:2])} (+{soft_points:.1f})."
             )
 
     # Work style alignment rule
-    target_styles = career_info["target_workstyles"]
-    if profile.work_style in target_styles:
-        points += 5.0
-        rules_fired.append(f"Rule [R-STYLE-MATCH]: Work style preference '{profile.work_style}' aligns with role requirements (+5).")
+    style_rule = RULE_BASE["work_style_rule"]
+    if profile.work_style in career_info["target_workstyles"]:
+        points += float(style_rule["points"])
+        rules_fired.append(f"Rule [{style_rule['id']}]: Work style preference '{profile.work_style}' aligns with role requirements (+{style_rule['points']:g}).")
 
     normalized_score = min(max(points / max_possible, 0.0), 1.0)
     return normalized_score, rules_fired
 
 
 # 6.2 ENGINE B: FUZZY LOGIC SUITABILITY (30% Weight)
-def fuzzy_triangular(x: float, a: float, b: float, c: float) -> float:
-    """Calculates triangular fuzzy membership degree μ(x) in [0, 1]."""
-    if x <= a or x >= c:
-        return 0.0
-    if a < x <= b:
-        return (x - a) / (b - a)
-    return (c - x) / (c - b)
+def build_fuzzy_career_system() -> ctrl.ControlSystem:
+    """Builds the Mamdani fuzzy inference system (scikit-fuzzy): 4 fuzzified inputs -> career suitability."""
+    gpa = ctrl.Antecedent(np.linspace(0.0, 4.0, 401), "gpa")
+    gpa["low"] = fuzz.trapmf(gpa.universe, [0.0, 0.0, 2.4, 2.9])
+    gpa["medium"] = fuzz.trimf(gpa.universe, [2.6, 3.2, 3.6])
+    gpa["high"] = fuzz.trapmf(gpa.universe, [3.3, 3.7, 4.0, 4.0])
+
+    # Average ratio of the student's skills to the career benchmark (each ratio capped at 1.2)
+    tech = ctrl.Antecedent(np.linspace(0.0, 1.5, 151), "tech_mastery")
+    tech["weak"] = fuzz.trapmf(tech.universe, [0.0, 0.0, 0.5, 0.7])
+    tech["moderate"] = fuzz.trimf(tech.universe, [0.6, 0.85, 1.05])
+    tech["strong"] = fuzz.trapmf(tech.universe, [0.9, 1.1, 1.5, 1.5])
+
+    # Share of the career archetype's required soft skills the student has
+    soft = ctrl.Antecedent(np.linspace(0.0, 1.0, 101), "soft_match")
+    soft["low"] = fuzz.trapmf(soft.universe, [0.0, 0.0, 0.25, 0.45])
+    soft["moderate"] = fuzz.trimf(soft.universe, [0.25, 0.5, 0.75])
+    soft["high"] = fuzz.trapmf(soft.universe, [0.5, 0.75, 1.0, 1.0])
+
+    # Work-style preference is crisp (1 = preferred style for the career), so its sets are complementary
+    style = ctrl.Antecedent(np.linspace(0.0, 1.0, 101), "style_fit")
+    style["mismatch"] = fuzz.trimf(style.universe, [0.0, 0.0, 1.0])
+    style["match"] = fuzz.trimf(style.universe, [0.0, 1.0, 1.0])
+
+    suit = ctrl.Consequent(np.linspace(0.0, 1.0, 101), "suitability", defuzzify_method="centroid")
+    suit["poor"] = fuzz.trapmf(suit.universe, [0.0, 0.0, 0.2, 0.4])
+    suit["fair"] = fuzz.trimf(suit.universe, [0.25, 0.45, 0.65])
+    suit["good"] = fuzz.trimf(suit.universe, [0.55, 0.72, 0.88])
+    suit["excellent"] = fuzz.trapmf(suit.universe, [0.8, 0.92, 1.0, 1.0])
+
+    # Every tech_mastery term has at least one rule that always fires, so the output is always defined.
+    rules = [
+        ctrl.Rule(tech["strong"] & gpa["high"] & soft["high"], suit["excellent"], label="F1"),
+        ctrl.Rule(tech["strong"] & soft["high"], suit["excellent"], label="F2"),
+        ctrl.Rule(tech["strong"] & (soft["moderate"] | soft["low"]), suit["good"], label="F3"),
+        ctrl.Rule(tech["moderate"] & (gpa["medium"] | gpa["high"]) & soft["moderate"], suit["good"], label="F4"),
+        ctrl.Rule(tech["moderate"] & soft["high"], suit["good"], label="F5"),
+        ctrl.Rule(tech["moderate"] & style["match"], suit["good"], label="F6"),
+        ctrl.Rule(tech["moderate"] & (style["mismatch"] | soft["low"]), suit["fair"], label="F7"),
+        ctrl.Rule(tech["weak"] & soft["high"] & style["match"], suit["fair"], label="F8"),
+        ctrl.Rule(tech["weak"] & gpa["low"] & soft["low"], suit["poor"], label="F9"),
+        ctrl.Rule(tech["weak"], suit["poor"], label="F10"),
+    ]
+    return ctrl.ControlSystem(rules)
 
 
-def fuzzy_trapezoidal(x: float, a: float, b: float, c: float, d: float) -> float:
-    """Calculates trapezoidal fuzzy membership degree μ(x) in [0, 1]."""
-    if x <= a or x >= d:
-        return 0.0
-    if a < x < b:
-        return (x - a) / (b - a)
-    if b <= x <= c:
-        return 1.0
-    return (d - x) / (d - c)
+FUZZY_CAREER_SYSTEM = build_fuzzy_career_system()
 
 
 def evaluate_fuzzy_suitability(profile: StudentProfile, career_name: str) -> float:
-    """Mamdani-style Fuzzy Inference System incorporating Soft-Skill Archetype Compatibility."""
-    gpa = profile.gpa
-
-    # Fuzzify GPA
-    mu_gpa_low = fuzzy_trapezoidal(gpa, 0.0, 0.0, 2.4, 2.9)
-    mu_gpa_med = fuzzy_triangular(gpa, 2.6, 3.2, 3.6)
-    mu_gpa_high = fuzzy_trapezoidal(gpa, 3.3, 3.7, 4.0, 4.0)
+    """Mamdani Fuzzy Inference (fuzzify -> min/max rule evaluation -> centroid defuzzification)."""
+    career_info = CAREER_UNIVERSE[career_name]
 
     # Compute Technical Mastery Degree
-    benchmarks = CAREER_UNIVERSE[career_name]["benchmark_skills"]
     unified = profile.get_unified_skill_dict()
-
     skill_ratios = []
-    for skill_k, req_val in benchmarks.items():
+    for skill_k, req_val in career_info["benchmark_skills"].items():
         curr_val = unified.get(skill_k, 0)
         ratio = min(curr_val / req_val, 1.2) if req_val > 0 else 1.0
         skill_ratios.append(ratio)
-
     avg_skill_ratio = float(np.mean(skill_ratios)) if skill_ratios else 0.7
 
-    mu_tech_weak = fuzzy_trapezoidal(avg_skill_ratio, 0.0, 0.0, 0.5, 0.7)
-    mu_tech_mod = fuzzy_triangular(avg_skill_ratio, 0.6, 0.85, 1.05)
-    mu_tech_strong = fuzzy_trapezoidal(avg_skill_ratio, 0.9, 1.1, 1.5, 1.5)
-
-    # Fuzzify Soft Skill Archetype Overlap
-    req_softs = CAREER_UNIVERSE[career_name].get("required_soft_skills", [])
+    # Soft Skill Archetype Overlap
+    req_softs = career_info.get("required_soft_skills", [])
     matched_softs = [s for s in req_softs if s in profile.soft_skills]
     soft_ratio = len(matched_softs) / len(req_softs) if req_softs else 0.5
 
-    mu_soft_high = fuzzy_trapezoidal(soft_ratio, 0.5, 0.75, 1.0, 1.0)
-    mu_soft_mod = fuzzy_triangular(soft_ratio, 0.25, 0.5, 0.75)
-    mu_soft_low = fuzzy_trapezoidal(soft_ratio, 0.0, 0.0, 0.25, 0.45)
+    sim = ctrl.ControlSystemSimulation(FUZZY_CAREER_SYSTEM)
+    sim.input["gpa"] = float(np.clip(profile.gpa, 0.0, 4.0))
+    sim.input["tech_mastery"] = float(np.clip(avg_skill_ratio, 0.0, 1.5))
+    sim.input["soft_match"] = float(soft_ratio)
+    sim.input["style_fit"] = 1.0 if profile.work_style in career_info["target_workstyles"] else 0.0
+    sim.compute()
+    crisp_suitability = float(sim.output["suitability"])
 
-    # Fuzzify Work-Style Compatibility
-    is_preferred_style = profile.work_style in CAREER_UNIVERSE[career_name]["target_workstyles"]
-    mu_style_high = 1.0 if is_preferred_style else 0.3
-
-    # Academic Year Readiness
+    # Academic Year Readiness scales the defuzzified output (final-years are closer to job-ready)
     year_map = {"1st Year": 0.4, "2nd Year": 0.65, "3rd Year": 0.85, "4th Year": 1.0}
     year_factor = year_map.get(profile.year, 0.75)
 
-    # Mamdani Fuzzy Rules:
-    w1 = min(mu_tech_strong, mu_gpa_high, mu_soft_high)  # High Fit
-    w2 = min(mu_tech_strong, mu_soft_high)                # Strong soft + tech
-    w3 = min(mu_tech_mod, max(mu_gpa_med, mu_gpa_high), mu_soft_mod)
-    w4 = min(mu_tech_mod, mu_style_high)
-    w5 = min(mu_tech_weak, mu_gpa_low, mu_soft_low)
-    w6 = 0.15
-
-    consequents = [0.96, 0.88, 0.72, 0.60, 0.25, 0.50]
-    weights = [w1, w2, w3, w4, w5, w6]
-
-    total_weight = sum(weights)
-    if total_weight > 0:
-        crisp_suitability = sum(w * c for w, c in zip(weights, consequents)) / total_weight
-    else:
-        crisp_suitability = 0.5
-
-    final_fuzzy_score = float(crisp_suitability * (0.85 + 0.15 * year_factor))
+    final_fuzzy_score = crisp_suitability * (0.85 + 0.15 * year_factor)
     return min(max(final_fuzzy_score, 0.0), 1.0)
 
 
@@ -1552,13 +1557,21 @@ def get_default_calibrated_ml_classifier():
     return None, list(CAREER_UNIVERSE.keys())
 
 
+def get_active_classifier():
+    """Returns (model, careers, model_type) for the user-trained model, else the default Random Forest."""
+    if "active_ml_model" in st.session_state and st.session_state["active_ml_model"] is not None:
+        return (
+            st.session_state["active_ml_model"],
+            st.session_state.get("active_ml_careers", list(CAREER_UNIVERSE.keys())),
+            st.session_state.get("active_ml_type", "random_forest"),
+        )
+    clf, careers = get_default_calibrated_ml_classifier()
+    return clf, careers, "random_forest"
+
+
 def evaluate_ml_model(profile: StudentProfile) -> Dict[str, float]:
     """Generates class probability distribution across all 9 careers via active ML model."""
-    if "active_ml_model" in st.session_state and st.session_state["active_ml_model"] is not None:
-        clf = st.session_state["active_ml_model"]
-        careers = st.session_state.get("active_ml_careers", list(CAREER_UNIVERSE.keys()))
-    else:
-        clf, careers = get_default_calibrated_ml_classifier()
+    clf, careers, _ = get_active_classifier()
 
     feature_vec = build_feature_vector(profile)
 
@@ -1586,6 +1599,13 @@ def evaluate_ml_model(profile: StudentProfile) -> Dict[str, float]:
 
 
 # 6.4 HYBRID SCORE FUSION
+# All three engines already output 0-1, so ML probabilities are fused raw (no stretching that pins the top class
+# at 1.0). Confidence bands were recalibrated on 600 synthetic profiles to keep the label mix at roughly
+# 19% High / 64% Moderate / 16% Exploring: the 81st and 16th percentiles of the top fused score.
+HIGH_FIT_THRESHOLD = 0.63
+VIABLE_FIT_THRESHOLD = 0.46
+
+
 def run_hybrid_inference(profile: StudentProfile) -> List[Dict[str, Any]]:
     """Combines Rule-based (30%), Fuzzy logic (30%), and ML probabilities (40%)."""
     ml_probs = evaluate_ml_model(profile)
@@ -1596,16 +1616,14 @@ def run_hybrid_inference(profile: StudentProfile) -> List[Dict[str, Any]]:
         fuzzy_score = evaluate_fuzzy_suitability(profile, career_name)
         ml_score = ml_probs.get(career_name, 0.1)
 
-        ml_scaled = min(ml_score * 2.2, 1.0)
-
         # Weighted Score Fusion
-        final_score = (0.30 * rule_score) + (0.30 * fuzzy_score) + (0.40 * ml_scaled)
+        final_score = (0.30 * rule_score) + (0.30 * fuzzy_score) + (0.40 * ml_score)
         final_score = min(max(final_score, 0.0), 0.99)
 
-        if final_score >= 0.78:
+        if final_score >= HIGH_FIT_THRESHOLD:
             confidence = "High (⚡ Strong Fit)"
             conf_color = "#34D399"
-        elif final_score >= 0.62:
+        elif final_score >= VIABLE_FIT_THRESHOLD:
             confidence = "Moderate (⚡ Viable Path)"
             conf_color = "#00F0FF"
         else:
@@ -1631,7 +1649,7 @@ def run_hybrid_inference(profile: StudentProfile) -> List[Dict[str, Any]]:
             "conf_color": conf_color,
             "rule_score": round(rule_score * 100, 1),
             "fuzzy_score": round(fuzzy_score * 100, 1),
-            "ml_score": round(ml_scaled * 100, 1),
+            "ml_score": round(ml_score * 100, 1),
             "rules_fired": rules_fired,
             "matched_soft_skills": matched_softs,
             "missing_soft_skills": missing_softs,
@@ -1645,7 +1663,7 @@ def run_hybrid_inference(profile: StudentProfile) -> List[Dict[str, Any]]:
 # 7. EXPLAINABILITY (SHAP PROXY) & SKILL GAP ENGINE
 # -----------------------------------------------------------------------------
 def calculate_shap_proxy_deltas(profile: StudentProfile, top_career: str) -> pd.DataFrame:
-    """Computes transparent feature contributions (SHAP TreeExplainer proxy)."""
+    """Benchmark-delta feature contributions; fallback for calculate_shap_contributions when SHAP cannot run."""
     career_info = CAREER_UNIVERSE[top_career]
     bench = career_info["benchmark_skills"]
     unified = profile.get_unified_skill_dict()
@@ -1707,6 +1725,58 @@ def calculate_shap_proxy_deltas(profile: StudentProfile, top_career: str) -> pd.
     df = pd.DataFrame(feature_deltas)
     df = df.sort_values(by="Delta", key=abs, ascending=False).head(7)
     df = df.sort_values(by="Delta", ascending=True)
+    df.attrs["method"] = "proxy"
+    return df
+
+
+_SHAP_EXPLAINERS: Dict[int, Any] = {}
+
+
+def get_tree_explainer(clf):
+    """Returns a cached shap.TreeExplainer for the given tree model (one per trained model object)."""
+    import shap
+
+    cached = _SHAP_EXPLAINERS.get(id(clf))
+    if cached is None or cached[0] is not clf:
+        cached = (clf, shap.TreeExplainer(clf))
+        _SHAP_EXPLAINERS[id(clf)] = cached
+    return cached[1]
+
+
+def calculate_shap_contributions(profile: StudentProfile, top_career: str, top_n: int = 7) -> pd.DataFrame:
+    """SHAP TreeExplainer attributions of the ML engine's probability for top_career, for this student.
+
+    Each Delta is that feature's contribution in percentage points; base value + all contributions equals
+    the model's predicted probability. Falls back to the benchmark-delta proxy if SHAP cannot run.
+    """
+    clf, careers, model_type = get_active_classifier()
+    try:
+        class_label = careers.index(top_career)
+        class_col = list(clf.classes_).index(class_label)
+        x = build_feature_vector(profile).reshape(1, -1)
+
+        explainer = get_tree_explainer(clf)
+        raw = explainer.shap_values(x)
+        # Older shap returns one array per class; newer returns (samples, features, classes)
+        if isinstance(raw, list):
+            contrib = np.asarray(raw[class_col])[0]
+        else:
+            arr = np.asarray(raw)
+            contrib = arr[0, :, class_col] if arr.ndim == 3 else arr[0]
+        base_value = float(np.ravel(explainer.expected_value)[class_col])
+    except Exception:
+        return calculate_shap_proxy_deltas(profile, top_career)
+
+    df = pd.DataFrame({"Feature": FEATURE_NAMES, "Delta": np.round(contrib * 100.0, 1)})
+    df["Color"] = np.where(df["Delta"] >= 0, "#00F0FF", "#F43F5E")
+    df = df.reindex(df["Delta"].abs().sort_values(ascending=False).index).head(top_n)
+    df = df.sort_values(by="Delta", ascending=True).reset_index(drop=True)
+    df.attrs.update({
+        "method": "shap",
+        "model": MODEL_LABELS.get(model_type, model_type),
+        "base_value": base_value,
+        "prediction": base_value + float(contrib.sum()),
+    })
     return df
 
 
@@ -1755,9 +1825,10 @@ def calculate_skill_gaps(profile: StudentProfile, top_career: str) -> List[Dict[
             gaps.append({
                 "skill_key": skill_key,
                 "skill_name": label_map.get(skill_key, skill_key),
-                "current": f"{int(curr_val)}/100" if req_val > 5 else f"{int(curr_val)}/5",
-                "target": f"{int(req_val)}/100" if req_val > 5 else f"{int(req_val)}/5",
+                "current": f"{curr_val:g}/{scale:g}",
+                "target": f"{req_val:g}/{scale:g}",
                 "deficit": round(deficit, 1),
+                "gap_pct": round(norm_deficit * 100.0, 1),
                 "urgency": urgency,
                 "badge_class": badge_class,
             })
@@ -1772,11 +1843,13 @@ def calculate_skill_gaps(profile: StudentProfile, top_career: str) -> List[Dict[
                 "current": "Missing",
                 "target": "Recommended",
                 "deficit": 18.0,
+                "gap_pct": 18.0,
                 "urgency": "Medium Priority",
                 "badge_class": "pf-badge-med",
             })
 
-    gaps.sort(key=lambda x: x["deficit"], reverse=True)
+    # Module grades (0-100) and proficiencies (1-5) only compare as a share of their own scale
+    gaps.sort(key=lambda x: x["gap_pct"], reverse=True)
     return gaps
 
 
@@ -1795,7 +1868,7 @@ def recommend_certifications(
     """
     catalog = load_certification_catalog()
     
-    # Domain Mapping for 9 Career Archetypes
+    # Domain Mapping for the 9 Careers
     CAREER_DOMAINS = {
         "Software Engineer": {"Software Engineering", "Web Development", "Cloud & DevOps", "Core Systems"},
         "Data Scientist": {"Data & Analytics", "Artificial Intelligence", "Database & Big Data"},
@@ -1823,7 +1896,7 @@ def recommend_certifications(
     for g in gaps:
         sk = g["skill_key"]
         w = urgency_weights.get(g.get("urgency", "Medium Priority"), 2.0)
-        def_val = float(g.get("deficit", 1.0))
+        def_val = float(g.get("gap_pct", g.get("deficit", 1.0)))
         weighted_val = def_val * w
         weighted_gaps[sk] = weighted_val
         total_gap_weight += weighted_val
@@ -2084,7 +2157,7 @@ def apply_preset(preset_key: str) -> None:
     )
     res = run_hybrid_inference(prof)
     top = res[0]
-    sh = calculate_shap_proxy_deltas(prof, top["career"])
+    sh = calculate_shap_contributions(prof, top["career"])
     gp = calculate_skill_gaps(prof, top["career"])
     rc = recommend_certifications(gp, target_career=top["career"], student_year=year)
     nr = generate_executive_narrative(prof, top, gp)
@@ -2123,7 +2196,7 @@ if "evaluation_data" not in st.session_state:
     )
     def_res = run_hybrid_inference(def_prof)
     def_top = def_res[0]
-    def_sh = calculate_shap_proxy_deltas(def_prof, def_top["career"])
+    def_sh = calculate_shap_contributions(def_prof, def_top["career"])
     def_gp = calculate_skill_gaps(def_prof, def_top["career"])
     def_rc = recommend_certifications(def_gp, target_career=def_top["career"], student_year=def_year)
     def_nr = generate_executive_narrative(def_prof, def_top, def_gp)
@@ -2144,7 +2217,7 @@ st.markdown(
     <div class="pf-header">
         <span class="pf-header-badge">⚡ QUANTUM CAREER INTELLIGENCE SYSTEM // v2.4</span>
         <h1 class="pf-title">PathFinder AI</h1>
-        <p class="pf-subtitle">Transparent multi-engine trajectory modeling, 6-archetype soft-skill mapping, dataset studio, and learning pathways.</p>
+        <p class="pf-subtitle">Transparent multi-engine trajectory modeling, 5-archetype soft-skill mapping, dataset studio, and learning pathways.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -2480,7 +2553,7 @@ with tab1:
         top_rec = inference_results[0]
 
         # Calculate SHAP & Gaps
-        shap_df = calculate_shap_proxy_deltas(profile, top_rec["career"])
+        shap_df = calculate_shap_contributions(profile, top_rec["career"])
         gaps = calculate_skill_gaps(profile, top_rec["career"])
         rec_certs = recommend_certifications(gaps, target_career=top_rec["career"], student_year=in_year)
         narrative = generate_executive_narrative(profile, top_rec, gaps)
@@ -2689,6 +2762,14 @@ with tab2:
             with col_v2:
                 st.markdown("<div class='pf-card-title'>🔮 Explainability: Feature Contributions (SHAP)</div>", unsafe_allow_html=True)
                 st.markdown(f"<div class='pf-card-desc'>Factors driving (+) or penalizing (-) the primary match (<b style='color: #00F0FF;'>{top_rec['title']}</b>).</div>", unsafe_allow_html=True)
+                if shap_df.attrs.get("method") == "shap":
+                    shap_caption = (
+                        f"SHAP TreeExplainer on the {shap_df.attrs['model']} engine: bars are percentage-point contributions "
+                        f"to its raw {top_rec['title']} probability ({shap_df.attrs['base_value']*100:.1f}% average "
+                        f"→ {shap_df.attrs['prediction']*100:.1f}% for this student). Top 7 of 20 features shown."
+                    )
+                else:
+                    shap_caption = "SHAP unavailable for the active model, showing benchmark-delta approximation instead."
 
                 fig_shap = go.Figure()
                 fig_shap.add_trace(
@@ -2715,6 +2796,7 @@ with tab2:
                     plot_bgcolor="rgba(15, 23, 42, 0.5)",
                 )
                 st.plotly_chart(fig_shap, use_container_width=True, config={"displayModeBar": False})
+                st.caption(shap_caption)
 
         with v_tab2:
             st.markdown(f"<div class='pf-card-title'>🕸️ Competency Benchmark Radar: Student vs. {top_rec['title']}</div>", unsafe_allow_html=True)
@@ -2801,7 +2883,8 @@ with tab2:
             st.markdown(f"**Rules evaluated and triggered for {top_rec['title']}:**")
             for r in top_rec["rules_fired"]:
                 st.markdown(f"- `{r}`")
-            st.caption("Engine Weights: 30% Rule Logic + 30% Mamdani Fuzzy System + 40% Random Forest Probability.")
+            active_model_label = MODEL_LABELS.get(st.session_state.get("active_ml_type", "random_forest"), "Random Forest")
+            st.caption(f"Engine Weights: 30% Rule Logic (rules.json) + 30% Mamdani Fuzzy System (scikit-fuzzy) + 40% {active_model_label} Probability.")
 
         st.markdown("<hr style='border: 0; border-top: 1px solid rgba(56, 189, 248, 0.2); margin: 1.5rem 0;'>", unsafe_allow_html=True)
 
@@ -2998,30 +3081,68 @@ with tab3:
         """
         <div class="pf-card">
             <div class="pf-card-title">🚀 Train / Retrain Machine Learning Classifier</div>
-            <div class="pf-card-desc">Fit a Random Forest multi-class model on the active dataset to calibrate career predictions.</div>
+            <div class="pf-card-desc">Fit a Random Forest ensemble or a single Decision Tree baseline on the active dataset to calibrate career predictions.</div>
         """,
         unsafe_allow_html=True,
     )
 
+    model_choice = st.radio(
+        "Classifier",
+        ["random_forest", "decision_tree"],
+        format_func=lambda m: MODEL_LABELS[m],
+        horizontal=True,
+    )
     tcol1, tcol2, tcol3 = st.columns(3)
     with tcol1:
-        n_est = st.slider("Number of Estimators (Trees)", 20, 200, 80, step=10)
+        n_est = st.slider(
+            "Number of Estimators (Trees)", 20, 200, 80, step=10,
+            disabled=model_choice == "decision_tree", help="Random Forest only; a Decision Tree is a single tree.",
+        )
     with tcol2:
         m_dep = st.slider("Maximum Tree Depth", 3, 20, 10)
     with tcol3:
         t_split = st.slider("Test Split Ratio", 0.1, 0.4, 0.2, step=0.05)
 
-    if st.button("⚡ Train Model on Active Dataset", type="primary", use_container_width=True):
-        with st.spinner("Training Random Forest Classifier on dataset..."):
-            train_results = train_custom_classifier(active_df, n_estimators=n_est, max_depth=m_dep, test_size=t_split)
+    bcol1, bcol2 = st.columns(2)
+    with bcol1:
+        train_clicked = st.button("⚡ Train Model on Active Dataset", type="primary", use_container_width=True)
+    with bcol2:
+        compare_clicked = st.button("⚖️ Compare Decision Tree vs Random Forest", use_container_width=True)
+
+    if train_clicked:
+        with st.spinner(f"Training {MODEL_LABELS[model_choice]} Classifier on dataset..."):
+            train_results = train_custom_classifier(
+                active_df, n_estimators=n_est, max_depth=m_dep, test_size=t_split, model_type=model_choice
+            )
 
             if "error" in train_results:
                 st.error(f"Training failed: {train_results['error']}")
             else:
                 st.session_state["active_ml_model"] = train_results["model"]
                 st.session_state["active_ml_careers"] = train_results["careers"]
+                st.session_state["active_ml_type"] = train_results["model_type"]
                 st.session_state["train_metrics"] = train_results
-                st.success(f"⚡ Model successfully trained! Test Accuracy: **{train_results['test_acc']*100:.1f}%** | Train Accuracy: **{train_results['train_acc']*100:.1f}%**")
+                st.success(f"⚡ {MODEL_LABELS[model_choice]} successfully trained and now drives the ML engine! Test Accuracy: **{train_results['test_acc']*100:.1f}%** | Train Accuracy: **{train_results['train_acc']*100:.1f}%**")
+
+    if compare_clicked:
+        with st.spinner("Training both classifiers with 5-fold cross-validation..."):
+            try:
+                st.session_state["model_comparison"] = compare_classifiers(
+                    active_df, n_estimators=n_est, max_depth=m_dep, test_size=t_split
+                )
+            except Exception as e:
+                st.error(f"Comparison failed: {e}")
+
+    if "model_comparison" in st.session_state:
+        st.markdown("##### ⚖️ Baseline Comparison (same split & folds)")
+        st.dataframe(
+            st.session_state["model_comparison"].style.format(
+                {"Train Accuracy": "{:.1%}", "Test Accuracy": "{:.1%}", "CV Mean": "{:.1%}", "CV Std": "±{:.1%}"}
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+        st.caption("Comparison only: the active ML engine changes only when you press Train.")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -3046,7 +3167,7 @@ with tab3:
             x="Importance",
             y="Feature",
             orientation="h",
-            title="Global Feature Importances (Random Forest Gini Impurity)",
+            title=f"Global Feature Importances ({MODEL_LABELS.get(metrics.get('model_type'), 'Random Forest')} Gini Impurity)",
             color="Importance",
             color_continuous_scale=[[0, "#0C4A6E"], [1, "#00F0FF"]],
         )

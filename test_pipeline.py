@@ -5,6 +5,7 @@ Tests all individual engines, 4-pillar soft skills mapping, and persistence mech
 
 import sys
 import os
+import tempfile
 
 # Ensure UTF-8 output on all platforms
 if sys.platform == "win32":
@@ -16,6 +17,7 @@ if sys.platform == "win32":
 # Add directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import app
 from app import (
     StudentProfile,
     CAREER_UNIVERSE,
@@ -24,7 +26,11 @@ from app import (
     evaluate_fuzzy_suitability,
     evaluate_ml_model,
     run_hybrid_inference,
-    calculate_shap_proxy_deltas,
+    calculate_shap_contributions,
+    RULE_BASE,
+    generate_benchmark_dataset,
+    train_custom_classifier,
+    compare_classifiers,
     calculate_skill_gaps,
     recommend_certifications,
     generate_executive_narrative,
@@ -35,7 +41,7 @@ from app import (
 
 
 def run_tests():
-    print("✦ [1/7] Testing Knowledge Base & Universe integrity...")
+    print("✦ [1/8] Testing Knowledge Base & Universe integrity...")
     assert len(CAREER_UNIVERSE) == 9, f"Expected 9 careers, got {len(CAREER_UNIVERSE)}"
     assert len(CERTIFICATION_CATALOG) >= 8, f"Expected >=8 certs, got {len(CERTIFICATION_CATALOG)}"
     for cname, cinfo in CAREER_UNIVERSE.items():
@@ -43,9 +49,10 @@ def run_tests():
         assert "required_soft_skills" in cinfo, f"Missing required_soft_skills in {cname}"
         assert "weight_bonus" in cinfo, f"Missing weight_bonus in {cname}"
         assert "role_dynamic" in cinfo, f"Missing role_dynamic in {cname}"
-    print("  ✓ Knowledge Base integrity & 6-Archetype mappings passed.")
+    assert set(RULE_BASE["career_rules"]) == set(CAREER_UNIVERSE), "rules.json must define rules for every career"
+    print("  ✓ Knowledge Base integrity & 5-Archetype mappings passed.")
 
-    print("✦ [2/7] Creating test student profile with 4-pillar soft skills...")
+    print("✦ [2/8] Creating test student profile with 4-pillar soft skills...")
     profile = StudentProfile(
         gpa=3.75,
         year="3rd Year",
@@ -83,7 +90,7 @@ def run_tests():
     )
     print("  ✓ Profile object created successfully with 4-pillar soft skills.")
 
-    print("✦ [3/7] Testing Rule-Based Engine & Soft Skill Bonus Trace...")
+    print("✦ [3/8] Testing Rule-Based Engine & Soft Skill Bonus Trace...")
     rule_score, rules_fired = evaluate_rule_engine(profile, "AI Engineer")
     assert 0.0 <= rule_score <= 1.0, f"Invalid rule score: {rule_score}"
     assert len(rules_fired) > 0, "Expected rules to fire for AI Engineer"
@@ -91,12 +98,15 @@ def run_tests():
     assert soft_rule_fired, "Expected soft skills rule R-SOFT-SKILLS to fire"
     print(f"  ✓ Rule score: {rule_score:.2f}, Rules fired count: {len(rules_fired)}")
 
-    print("✦ [4/7] Testing Fuzzy Logic Mamdani Suitability Engine with Soft Skill Clusters...")
+    print("✦ [4/8] Testing Fuzzy Logic Mamdani Suitability Engine with Soft Skill Clusters...")
     fuzzy_score = evaluate_fuzzy_suitability(profile, "AI Engineer")
     assert 0.0 <= fuzzy_score <= 1.0, f"Invalid fuzzy score: {fuzzy_score}"
+    perfect = StudentProfile(4.0, profile.year, profile.core_modules, profile.electives, profile.tech_skills,
+                             CAREER_UNIVERSE["AI Engineer"]["required_soft_skills"], [], profile.work_style, True, 4, "")
+    assert evaluate_fuzzy_suitability(perfect, "AI Engineer") >= fuzzy_score, "A perfect GPA/soft-skill match must not score lower"
     print(f"  ✓ Fuzzy suitability score: {fuzzy_score:.2f}")
 
-    print("✦ [5/7] Testing ML Classifier & Hybrid Multi-Engine Fusion...")
+    print("✦ [5/8] Testing ML Classifier & Hybrid Multi-Engine Fusion...")
     ml_probs = evaluate_ml_model(profile)
     assert len(ml_probs) == 9, f"Expected 9 probabilities, got {len(ml_probs)}"
 
@@ -105,9 +115,12 @@ def run_tests():
     top_career = results[0]
     print(f"  ✓ Top recommendation: {top_career['title']} ({top_career['match_pct']}%) [{top_career['archetype']}] with {top_career['confidence']}")
 
-    print("✦ [6/7] Testing SHAP XAI, Skill Gap & Cosine Certification Matching...")
-    shap_df = calculate_shap_proxy_deltas(profile, top_career["career"])
+    print("✦ [6/8] Testing SHAP XAI, Skill Gap & Cosine Certification Matching...")
+    shap_df = calculate_shap_contributions(profile, top_career["career"])
     assert not shap_df.empty, "SHAP dataframe should not be empty"
+    assert shap_df.attrs["method"] == "shap", "Expected real SHAP TreeExplainer values, got the proxy fallback"
+    raw_prob = ml_probs[top_career["career"]]
+    assert abs(shap_df.attrs["prediction"] - raw_prob) < 1e-4, "SHAP base + contributions must equal the model probability"
 
     gaps = calculate_skill_gaps(profile, top_career["career"])
     certs = recommend_certifications(gaps)
@@ -118,7 +131,19 @@ def run_tests():
     print(f"  ✓ XAI deltas: {len(shap_df)}, Skill gaps: {len(gaps)}, Recommended certs: {len(certs)}")
     print(f"  ✓ Narrative preview: {narrative[:80]}...")
 
-    print("✦ [7/7] Testing SQLite Local Database Storage...")
+    print("✦ [7/8] Testing Decision Tree baseline vs Random Forest...")
+    df = generate_benchmark_dataset(samples_per_class=20)
+    dt = train_custom_classifier(df, max_depth=8, model_type="decision_tree")
+    assert "error" not in dt and type(dt["model"]).__name__ == "DecisionTreeClassifier", dt.get("error")
+    comparison = compare_classifiers(df, n_estimators=30, max_depth=8)
+    assert list(comparison["Model"]) == ["Decision Tree", "Random Forest"]
+    print("  ✓ " + " | ".join(f"{r.Model}: test {r._3:.1%}, CV {r._4:.1%}" for r in comparison.itertuples()))
+
+    print("✦ [8/8] Testing SQLite Local Database Storage...")
+    # Use a throwaway database so test runs never add rows to the real career_records.db
+    real_db = app.DB_FILE
+    tmp_dir = tempfile.TemporaryDirectory()
+    app.DB_FILE = os.path.join(tmp_dir.name, "test_records.db")
     init_database()
     save_student_record(
         gpa=profile.gpa,
@@ -132,9 +157,12 @@ def run_tests():
     )
     df_records = fetch_all_records()
     assert not df_records.empty, "Database records should not be empty after insert"
-    print(f"  ✓ Database record verified. Total rows: {len(df_records)}")
+    assert len(df_records) == 1, f"Expected exactly the 1 test row, got {len(df_records)}"
+    app.DB_FILE = real_db
+    tmp_dir.cleanup()
+    print(f"  ✓ Database record verified in a temporary database. Total rows: {len(df_records)}")
 
-    print("\n🎉 ALL 7/7 TEST MODULES PASSED PERFECTLY!\n")
+    print("\n🎉 ALL 8/8 TEST MODULES PASSED PERFECTLY!\n")
 
 
 if __name__ == "__main__":
