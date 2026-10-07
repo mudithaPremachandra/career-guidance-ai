@@ -50,6 +50,8 @@ def run_smoke_test() -> None:
     run_button.click()
     at.run()
     fail_on_exception(at, "first assessment")
+    assert not any("pf-loading-overlay" in m.value for m in at.markdown), "Loading overlay was left on screen"
+    assert at.session_state["main_tabs"] == "02 // Guidance & Roadmap", "Finished assessment should open the results tab"
     data = at.session_state["evaluation_data"]
     assert data["student_id"] == "CI-SMOKE-STUDENT" and data["progress"] is None
     print(f"  ✓ Top recommendation: {data['top_rec']['title']} ({data['top_rec']['match_pct']}%)")

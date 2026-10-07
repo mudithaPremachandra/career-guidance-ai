@@ -31,8 +31,9 @@ import streamlit as st
 from src.database import clear_all_records, fetch_all_records, fetch_student_history, init_database, normalize_student_id, save_student_record
 from src.explainability import calculate_shap_contributions
 from src.fusion import run_hybrid_inference
-from src.guidance import PATHWAY_PHASES, generate_guidance
+from src.guidance import PATHWAY_PHASES, generate_guidance, get_app_setting
 from src.knowledge_base import ALL_24_SOFT_SKILLS, CAREER_UNIVERSE
+from src.loading_overlay import LoadingOverlay
 from src.ml_engine import MODEL_LABELS, compare_classifiers, generate_benchmark_dataset, train_custom_classifier
 from src.profile import StudentProfile
 from src.progress import build_progress_chart, cert_titles, compare_assessments, parse_held_certifications, profile_to_dict
@@ -381,6 +382,11 @@ st.markdown(
     ::-webkit-scrollbar-thumb:hover {
         background: #00F0FF;
     }
+
+    /* Hide Streamlit's toolbar and running indicator: the loading overlay shows progress instead */
+    [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -388,6 +394,11 @@ st.markdown(
 
 
 init_database()
+
+# Created at the top level so no transformed/blurred container traps the fixed-position overlay
+loading = LoadingOverlay()
+ANALYSIS_STEPS = 4
+ROADMAP_STAGE = "Asking Gemini to narrate your roadmap" if get_app_setting("GEMINI_API_KEY") else "Writing your personalised roadmap"
 
 
 # -----------------------------------------------------------------------------
@@ -490,12 +501,17 @@ def apply_preset(preset_key: str) -> None:
         projects_count=projects,
         existing_certs=certs,
     )
-    res = run_hybrid_inference(prof)
-    top = res[0]
-    sh = calculate_shap_contributions(prof, top["career"])
-    gp = calculate_skill_gaps(prof, top["career"])
-    rc = recommend_certifications(gp, target_career=top["career"], student_year=year, held_cert_ids=tuple(parse_held_certifications(certs)))
-    gd = generate_guidance(prof, top, gp, rc)
+    with loading.show(ANALYSIS_STEPS) as stage:
+        stage(1, f"Scoring the sample profile against {len(CAREER_UNIVERSE)} careers")
+        res = run_hybrid_inference(prof)
+        top = res[0]
+        stage(2, "Explaining the top match with SHAP")
+        sh = calculate_shap_contributions(prof, top["career"])
+        stage(3, "Finding skill gaps and matching certifications")
+        gp = calculate_skill_gaps(prof, top["career"])
+        rc = recommend_certifications(gp, target_career=top["career"], student_year=year, held_cert_ids=tuple(parse_held_certifications(certs)))
+        stage(4, ROADMAP_STAGE)
+        gd = generate_guidance(prof, top, gp, rc)
     st.session_state["evaluation_data"] = {
         "profile": prof,
         "results": res,
@@ -530,12 +546,17 @@ if "evaluation_data" not in st.session_state:
         projects_count=3,
         existing_certs="AWS Cloud Practitioner",
     )
-    def_res = run_hybrid_inference(def_prof)
-    def_top = def_res[0]
-    def_sh = calculate_shap_contributions(def_prof, def_top["career"])
-    def_gp = calculate_skill_gaps(def_prof, def_top["career"])
-    def_rc = recommend_certifications(def_gp, target_career=def_top["career"], student_year=def_year, held_cert_ids=tuple(parse_held_certifications(def_prof.existing_certs)))
-    def_gd = generate_guidance(def_prof, def_top, def_gp, def_rc)
+    with loading.show(ANALYSIS_STEPS) as stage:
+        stage(1, f"Warming up: scoring a sample profile against {len(CAREER_UNIVERSE)} careers")
+        def_res = run_hybrid_inference(def_prof)
+        def_top = def_res[0]
+        stage(2, "Explaining the top match with SHAP")
+        def_sh = calculate_shap_contributions(def_prof, def_top["career"])
+        stage(3, "Finding skill gaps and matching certifications")
+        def_gp = calculate_skill_gaps(def_prof, def_top["career"])
+        def_rc = recommend_certifications(def_gp, target_career=def_top["career"], student_year=def_year, held_cert_ids=tuple(parse_held_certifications(def_prof.existing_certs)))
+        stage(4, ROADMAP_STAGE)
+        def_gd = generate_guidance(def_prof, def_top, def_gp, def_rc)
     st.session_state["evaluation_data"] = {
         "profile": def_prof,
         "results": def_res,
@@ -560,12 +581,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab1, tab2, tab3, tab4 = st.tabs([
-    "01 // Profile Intake",
-    "02 // Guidance & Roadmap",
-    "03 // Dataset & Model Studio",
-    "04 // History Log",
-])
+MAIN_TABS = ["01 // Profile Intake", "02 // Guidance & Roadmap", "03 // Dataset & Model Studio", "04 // History Log"]
+RESULTS_TAB = MAIN_TABS[1]
+
+# A finished assessment sets this flag and reruns; the active tab can only be changed before st.tabs is drawn
+if st.session_state.pop("show_results", False):
+    st.session_state["main_tabs"] = RESULTS_TAB
+    st.toast("⚡ Multi-Engine Evaluation complete! Here is your personalised roadmap.", icon="✅")
+
+# on_change="rerun" makes the tabs track state, so the selected tab can be set through st.session_state["main_tabs"]
+tab1, tab2, tab3, tab4 = st.tabs(MAIN_TABS, key="main_tabs", on_change="rerun")
 
 
 # -----------------------------------------------------------------------------
@@ -895,15 +920,20 @@ with tab1:
             existing_certs=in_certs,
         )
 
-        # Run Multi-Engine Inference
-        inference_results = run_hybrid_inference(profile)
-        top_rec = inference_results[0]
+        with loading.show(ANALYSIS_STEPS) as stage:
+            # Run Multi-Engine Inference
+            stage(1, f"Scoring your profile against {len(CAREER_UNIVERSE)} careers")
+            inference_results = run_hybrid_inference(profile)
+            top_rec = inference_results[0]
 
-        # Calculate SHAP & Gaps
-        shap_df = calculate_shap_contributions(profile, top_rec["career"])
-        gaps = calculate_skill_gaps(profile, top_rec["career"])
-        rec_certs = recommend_certifications(gaps, target_career=top_rec["career"], student_year=in_year, held_cert_ids=tuple(parse_held_certifications(in_certs)))
-        guidance = generate_guidance(profile, top_rec, gaps, rec_certs)
+            # Calculate SHAP & Gaps
+            stage(2, f"Explaining your {top_rec['title']} match with SHAP")
+            shap_df = calculate_shap_contributions(profile, top_rec["career"])
+            stage(3, "Finding your skill gaps and matching certifications")
+            gaps = calculate_skill_gaps(profile, top_rec["career"])
+            rec_certs = recommend_certifications(gaps, target_career=top_rec["career"], student_year=in_year, held_cert_ids=tuple(parse_held_certifications(in_certs)))
+            stage(4, ROADMAP_STAGE)
+            guidance = generate_guidance(profile, top_rec, gaps, rec_certs)
 
         top_driver = shap_df[shap_df["Delta"] > 0].iloc[-1]["Feature"] if not shap_df[shap_df["Delta"] > 0].empty else "Academic Foundation"
         critical_gap = gaps[0]["skill_name"] if gaps else "None (Target Met)"
@@ -944,7 +974,8 @@ with tab1:
             "history": fetch_student_history(student_id),
         }
 
-        st.toast("⚡ Multi-Engine Evaluation complete! View your results in Tab 02 // Guidance & Roadmap.", icon="✅")
+        st.session_state["show_results"] = True
+        st.rerun()
 
 
 # -----------------------------------------------------------------------------
