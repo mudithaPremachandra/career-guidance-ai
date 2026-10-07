@@ -1,0 +1,488 @@
+{
+  "generated_at": "2026-10-07T18:07:03",
+  "versions": {
+    "python": "3.14.5",
+    "scikit_learn": "1.9.1",
+    "numpy": "2.5.3",
+    "joblib": "1.6.0"
+  },
+  "dataset": {
+    "file": "data/benchmark_dataset.csv",
+    "source": "synthetic cohort from generate_benchmark_dataset() (seed 42), sampled around each career's benchmark skills",
+    "samples_per_class": 45,
+    "rows": 405,
+    "classes": [
+      "Software Engineer",
+      "Data Scientist",
+      "AI Engineer",
+      "Cloud Architect",
+      "UX Designer",
+      "IT Business Analyst",
+      "Game Developer",
+      "CAD-CAM Engineer",
+      "Cybersecurity Specialist"
+    ],
+    "features": [
+      "GPA",
+      "Year",
+      "DSA",
+      "OOP",
+      "DBMS",
+      "OS & Networks",
+      "SE Principles",
+      "Math & Stats",
+      "Python",
+      "Java/C++",
+      "SQL",
+      "Web Stack",
+      "Cloud/Docker",
+      "ML/AI",
+      "Mobile Dev",
+      "Cybersecurity",
+      "Internship",
+      "Projects",
+      "Work Style",
+      "Soft Skills Affinity"
+    ],
+    "split": {
+      "test_size": 0.2,
+      "stratified": true,
+      "random_state": 42,
+      "train_rows": 324,
+      "test_rows": 81
+    }
+  },
+  "caveat": "The cohort is generated from the same benchmark matrix the rule and fuzzy engines use, so these scores show internal consistency, not accuracy on real students.",
+  "models": {
+    "random_forest": {
+      "file": "models/random_forest.joblib",
+      "hyperparameters": {
+        "n_estimators": 80,
+        "max_depth": 10,
+        "random_state": 42
+      },
+      "train_accuracy": 1.0,
+      "test_accuracy": 0.9506,
+      "cv_5fold_mean": 0.9481,
+      "cv_5fold_std": 0.0164,
+      "per_career": {
+        "Software Engineer": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0
+        },
+        "Data Scientist": {
+          "precision": 0.9,
+          "recall": 1.0,
+          "f1-score": 0.9474
+        },
+        "AI Engineer": {
+          "precision": 1.0,
+          "recall": 0.8889,
+          "f1-score": 0.9412
+        },
+        "Cloud Architect": {
+          "precision": 0.8889,
+          "recall": 0.8889,
+          "f1-score": 0.8889
+        },
+        "UX Designer": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0
+        },
+        "IT Business Analyst": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0
+        },
+        "Game Developer": {
+          "precision": 1.0,
+          "recall": 0.8889,
+          "f1-score": 0.9412
+        },
+        "CAD-CAM Engineer": {
+          "precision": 0.9,
+          "recall": 1.0,
+          "f1-score": 0.9474
+        },
+        "Cybersecurity Specialist": {
+          "precision": 0.8889,
+          "recall": 0.8889,
+          "f1-score": 0.8889
+        }
+      },
+      "confusion_matrix": {
+        "labels": [
+          "Software Engineer",
+          "Data Scientist",
+          "AI Engineer",
+          "Cloud Architect",
+          "UX Designer",
+          "IT Business Analyst",
+          "Game Developer",
+          "CAD-CAM Engineer",
+          "Cybersecurity Specialist"
+        ],
+        "rows_true_cols_predicted": [
+          [
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            8,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            9,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            9,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            8
+          ]
+        ]
+      },
+      "top_features": [
+        {
+          "feature": "DSA",
+          "importance": 0.1096
+        },
+        {
+          "feature": "Math & Stats",
+          "importance": 0.0999
+        },
+        {
+          "feature": "OS & Networks",
+          "importance": 0.0921
+        },
+        {
+          "feature": "OOP",
+          "importance": 0.087
+        },
+        {
+          "feature": "DBMS",
+          "importance": 0.0831
+        },
+        {
+          "feature": "ML/AI",
+          "importance": 0.0744
+        },
+        {
+          "feature": "Java/C++",
+          "importance": 0.0642
+        },
+        {
+          "feature": "Cybersecurity",
+          "importance": 0.0622
+        },
+        {
+          "feature": "Cloud/Docker",
+          "importance": 0.0561
+        },
+        {
+          "feature": "Mobile Dev",
+          "importance": 0.0497
+        }
+      ]
+    },
+    "decision_tree": {
+      "file": "models/decision_tree.joblib",
+      "hyperparameters": {
+        "n_estimators": null,
+        "max_depth": 10,
+        "random_state": 42
+      },
+      "train_accuracy": 0.9938,
+      "test_accuracy": 0.8025,
+      "cv_5fold_mean": 0.8247,
+      "cv_5fold_std": 0.0252,
+      "per_career": {
+        "Software Engineer": {
+          "precision": 0.7778,
+          "recall": 0.7778,
+          "f1-score": 0.7778
+        },
+        "Data Scientist": {
+          "precision": 0.6,
+          "recall": 0.6667,
+          "f1-score": 0.6316
+        },
+        "AI Engineer": {
+          "precision": 0.75,
+          "recall": 0.6667,
+          "f1-score": 0.7059
+        },
+        "Cloud Architect": {
+          "precision": 1.0,
+          "recall": 0.5556,
+          "f1-score": 0.7143
+        },
+        "UX Designer": {
+          "precision": 0.9,
+          "recall": 1.0,
+          "f1-score": 0.9474
+        },
+        "IT Business Analyst": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0
+        },
+        "Game Developer": {
+          "precision": 0.8889,
+          "recall": 0.8889,
+          "f1-score": 0.8889
+        },
+        "CAD-CAM Engineer": {
+          "precision": 0.8182,
+          "recall": 1.0,
+          "f1-score": 0.9
+        },
+        "Cybersecurity Specialist": {
+          "precision": 0.6,
+          "recall": 0.6667,
+          "f1-score": 0.6316
+        }
+      },
+      "confusion_matrix": {
+        "labels": [
+          "Software Engineer",
+          "Data Scientist",
+          "AI Engineer",
+          "Cloud Architect",
+          "UX Designer",
+          "IT Business Analyst",
+          "Game Developer",
+          "CAD-CAM Engineer",
+          "Cybersecurity Specialist"
+        ],
+        "rows_true_cols_predicted": [
+          [
+            7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            6,
+            2,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            3,
+            6,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            5,
+            0,
+            0,
+            0,
+            0,
+            3
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            9,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            9,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            8,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            6
+          ]
+        ]
+      },
+      "top_features": [
+        {
+          "feature": "OOP",
+          "importance": 0.1428
+        },
+        {
+          "feature": "Math & Stats",
+          "importance": 0.1173
+        },
+        {
+          "feature": "ML/AI",
+          "importance": 0.1114
+        },
+        {
+          "feature": "Mobile Dev",
+          "importance": 0.1082
+        },
+        {
+          "feature": "OS & Networks",
+          "importance": 0.1071
+        },
+        {
+          "feature": "Java/C++",
+          "importance": 0.0766
+        },
+        {
+          "feature": "Work Style",
+          "importance": 0.073
+        },
+        {
+          "feature": "Cloud/Docker",
+          "importance": 0.064
+        },
+        {
+          "feature": "DSA",
+          "importance": 0.0639
+        },
+        {
+          "feature": "DBMS",
+          "importance": 0.0623
+        }
+      ]
+    }
+  }
+}
